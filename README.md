@@ -1,68 +1,61 @@
 # Proof Forge
 
-Paste a rough proof in, get a cleaner formal proof out.
+A proof-polishing tool for real analysis. Paste a rough sketch, get back a structured proof with numbered steps and flagged gaps.
 
-Proof Forge transforms informal real-analysis proof sketches into structured, rigorous mathematical prose and highlights steps that need stronger justification.
+## What it does
+
+You write something like:
+
+> "Let $a_n \to L$. Since convergent sequences are bounded, $a_n$ is bounded. Therefore there exists $M$ such that $|a_n| \leq M$ for all $n$."
+
+Proof Forge rewrites it into clean, step-by-step mathematical prose, flags anything hand-wavy ("clearly", "it follows", etc.), and pulls out the assumptions and conclusion so you can see the skeleton of your argument.
+
+This is **structural assistance**, not formal verification — no Lean, no Coq, no correctness guarantees.
 
 ## Features
 
-- **Proof rewriting** — converts rough sketches into clean, formal mathematical English
-- **Step extraction** — breaks the proof into numbered logical steps with justifications
-- **Weak-step flagging** — highlights vague claims ("clearly", "obviously", "it follows") that need citations or additional reasoning
-- **Structure view** — shows assumptions and conclusion at a glance
-- **LaTeX math rendering** — displays proper mathematical notation via KaTeX
+- Rewrites informal sketches into formal mathematical English
+- Extracts numbered proof steps with explicit justifications
+- Flags vague or unsupported claims that need citations
+- Shows proof structure (assumptions / conclusion) at a glance
+- Renders LaTeX math via KaTeX
 
-## Getting started
+## Setup
 
-### Prerequisites
-
-- Node.js 18+
-- An OpenAI API key ([get one here](https://platform.openai.com/api-keys))
-
-### Install and run
+**Requirements:** Node.js 18+ and an [OpenAI API key](https://platform.openai.com/api-keys).
 
 ```bash
-git clone https://github.com/your-user/Proof-Forge.git
+git clone https://github.com/akhiltalluri/Proof-Forge.git
 cd Proof-Forge
 npm install
 ```
 
-Set your API key (pick one method):
+Configure your API key — either method works:
 
-```bash
-# Option A: environment variable
-cp .env.example .env.local
-# edit .env.local and paste your key
+| Method | How |
+|---|---|
+| Environment variable | `cp .env.example .env.local` and add your key |
+| In-app | Click **Set API Key** in the header once the app is running |
 
-# Option B: in-app
-# Click "Set API Key" in the header after starting the app
-```
-
-Start the dev server:
+Then start the dev server:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+The app runs at [localhost:3000](http://localhost:3000).
 
 ## How it works
 
-1. You paste an informal proof sketch (real analysis domain).
-2. The app sends it to OpenAI's GPT-4o-mini with a carefully engineered prompt.
-3. The model returns a structured JSON response containing the polished proof, step breakdown, assumptions, conclusion, and any warnings.
-4. The frontend renders everything with LaTeX math, tabbed views, and warning badges.
+1. User pastes an informal proof sketch (scoped to real analysis).
+2. The server sends it to GPT-4o-mini with a prompt engineered for step decomposition, formal rewriting, and gap detection.
+3. The model returns structured JSON — polished proof, steps, assumptions, conclusion, and any warnings.
+4. The frontend renders it with KaTeX math, tabbed views, and inline warning badges.
 
-## Scope
+## Domain
 
-This project covers **real analysis** proofs: sequences, limits, continuity, differentiation, integration, series, and metric spaces.
+Currently scoped to **real analysis**: sequences, limits, continuity, differentiation, integration, series, metric spaces.
 
-It provides **proof polishing and structural assistance**, not formal verification. It does not generate Lean/Coq code, prove new theorems, or guarantee correctness.
+## Built with
 
-## Tech stack
-
-- [Next.js 15](https://nextjs.org/) (App Router)
-- [Tailwind CSS 4](https://tailwindcss.com/)
-- [OpenAI API](https://platform.openai.com/) (GPT-4o-mini)
-- [KaTeX](https://katex.org/) + react-markdown for math rendering
-- TypeScript
+Next.js 15 · Tailwind CSS 4 · OpenAI API · KaTeX · TypeScript
