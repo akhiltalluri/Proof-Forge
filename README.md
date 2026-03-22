@@ -55,7 +55,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Scope
 
-This MVP covers **real analysis** proofs: sequences, limits, continuity, differentiation, integration, series, and metric spaces.
+This project covers **real analysis** proofs: sequences, limits, continuity, differentiation, integration, series, and metric spaces.
 
 It provides **proof polishing and structural assistance**, not formal verification. It does not generate Lean/Coq code, prove new theorems, or guarantee correctness.
 
