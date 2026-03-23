@@ -1,30 +1,62 @@
 "use client";
 
 import { useState } from "react";
-import { ProofResult } from "@/types/proof";
+import {
+  ProofResult,
+  ProofSuggestion,
+  PipelineStage,
+  PROOF_TYPE_LABELS,
+} from "@/types/proof";
 import MathText from "./MathText";
 import StepCard from "./StepCard";
+import VerificationBadge from "./VerificationBadge";
+import VulnerabilityCard from "./VulnerabilityCard";
+import SuggestionCard from "./SuggestionCard";
 
-type Tab = "proof" | "steps" | "structure";
+type Tab = "proof" | "steps" | "structure" | "verification";
 
 interface ProofOutputProps {
   result: ProofResult | null;
+  stage: PipelineStage;
+  onRetryWithSuggestion: (suggestion: ProofSuggestion) => void;
   isLoading: boolean;
 }
 
-export default function ProofOutput({ result, isLoading }: ProofOutputProps) {
-  const [activeTab, setActiveTab] = useState<Tab>("proof");
+const STAGE_LABELS: Record<PipelineStage, { title: string; sub: string }> = {
+  idle: { title: "", sub: "" },
+  classifying: {
+    title: "Classifying proof type…",
+    sub: "Detecting the proof technique",
+  },
+  polishing: {
+    title: "Polishing your proof…",
+    sub: "Rewriting into formal structure",
+  },
+  verifying: {
+    title: "Verifying the proof…",
+    sub: "Stress-testing for logical gaps",
+  },
+  suggesting: {
+    title: "Generating alternatives…",
+    sub: "Finding better proof strategies",
+  },
+  done: { title: "", sub: "" },
+};
 
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "proof", label: "Polished Proof" },
-    { id: "steps", label: "Steps" },
-    { id: "structure", label: "Structure" },
-  ];
+export default function ProofOutput({
+  result,
+  stage,
+  onRetryWithSuggestion,
+  isLoading,
+}: ProofOutputProps) {
+  const [activeTab, setActiveTab] = useState<Tab>("proof");
 
   const warningCount =
     result?.steps.filter((s) => s.hasWarning).length ?? 0;
+  const vulnCount = result?.verification?.vulnerabilities?.length ?? 0;
 
-  if (isLoading) {
+  if (isLoading || (stage !== "idle" && stage !== "done")) {
+    const label = STAGE_LABELS[stage] || STAGE_LABELS.classifying;
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 rounded-xl border border-zinc-700/40 bg-zinc-800/20 p-8">
         <div className="relative h-12 w-12">
@@ -32,12 +64,25 @@ export default function ProofOutput({ result, isLoading }: ProofOutputProps) {
           <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-indigo-500" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium text-zinc-300">
-            Forging your proof…
-          </p>
-          <p className="mt-1 text-xs text-zinc-500">
-            Analyzing structure and rewriting
-          </p>
+          <p className="text-sm font-medium text-zinc-300">{label.title}</p>
+          <p className="mt-1 text-xs text-zinc-500">{label.sub}</p>
+        </div>
+        <div className="flex items-center gap-2 mt-2">
+          {(["classifying", "polishing", "verifying", "suggesting"] as const).map(
+            (s) => (
+              <div
+                key={s}
+                className={`h-1.5 w-8 rounded-full transition-all ${
+                  s === stage
+                    ? "bg-indigo-500"
+                    : (["classifying", "polishing", "verifying", "suggesting"].indexOf(s) <
+                      ["classifying", "polishing", "verifying", "suggesting"].indexOf(stage))
+                      ? "bg-indigo-500/40"
+                      : "bg-zinc-700"
+                }`}
+              />
+            )
+          )}
         </div>
       </div>
     );
@@ -62,17 +107,35 @@ export default function ProofOutput({ result, isLoading }: ProofOutputProps) {
           </svg>
         </div>
         <p className="text-sm text-zinc-400">
-          Your polished proof will appear here
+          Your forged proof will appear here
         </p>
         <p className="text-xs text-zinc-600">
-          Paste an informal proof sketch and click &quot;Polish Proof&quot;
+          Paste an informal proof sketch and click &quot;Forge Proof&quot;
         </p>
       </div>
     );
   }
 
+  const tabs: { id: Tab; label: string }[] = [
+    { id: "proof", label: "Polished Proof" },
+    { id: "steps", label: "Steps" },
+    { id: "verification", label: "Verification" },
+    { id: "structure", label: "Structure" },
+  ];
+
   return (
     <div className="flex h-full flex-col">
+      {/* Proof type + verification badge */}
+      <div className="mb-4 flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-violet-500/15 px-3 py-0.5 text-xs font-semibold text-violet-300 border border-violet-500/25">
+            {PROOF_TYPE_LABELS[result.proofType]}
+          </span>
+        </div>
+        <VerificationBadge verification={result.verification} />
+      </div>
+
+      {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-zinc-700/50 pb-3 mb-4">
         {tabs.map((tab) => (
           <button
@@ -90,10 +153,16 @@ export default function ProofOutput({ result, isLoading }: ProofOutputProps) {
                 {warningCount}
               </span>
             )}
+            {tab.id === "verification" && vulnCount > 0 && (
+              <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500/20 px-1 text-[10px] font-bold text-red-400">
+                {vulnCount}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
+      {/* Tab content */}
       <div className="flex-1 overflow-auto">
         {activeTab === "proof" && (
           <div className="rounded-xl border border-zinc-700/40 bg-zinc-800/30 p-5">
@@ -108,6 +177,46 @@ export default function ProofOutput({ result, isLoading }: ProofOutputProps) {
             {result.steps.map((step) => (
               <StepCard key={step.number} step={step} />
             ))}
+          </div>
+        )}
+
+        {activeTab === "verification" && (
+          <div className="flex flex-col gap-4">
+            {vulnCount > 0 ? (
+              <>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                  Vulnerabilities Found ({vulnCount})
+                </h3>
+                {result.verification.vulnerabilities.map((v, i) => (
+                  <VulnerabilityCard key={i} vulnerability={v} />
+                ))}
+              </>
+            ) : (
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-5 text-center">
+                <p className="text-sm text-emerald-300">
+                  No vulnerabilities found. The proof holds up under scrutiny.
+                </p>
+              </div>
+            )}
+
+            {/* Suggestions when verification failed */}
+            {result.suggestions && result.suggestions.length > 0 && (
+              <div className="mt-2">
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                  Alternative Approaches
+                </h3>
+                <div className="grid gap-3 sm:grid-cols-1">
+                  {result.suggestions.map((s) => (
+                    <SuggestionCard
+                      key={s.id}
+                      suggestion={s}
+                      onSelect={onRetryWithSuggestion}
+                      disabled={isLoading}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -134,25 +243,6 @@ export default function ProofOutput({ result, isLoading }: ProofOutputProps) {
                 {result.conclusion}
               </MathText>
             </div>
-            {warningCount > 0 && (
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-400/80">
-                  Flagged Steps ({warningCount})
-                </h3>
-                <ul className="space-y-1.5">
-                  {result.steps
-                    .filter((s) => s.hasWarning)
-                    .map((s) => (
-                      <li
-                        key={s.number}
-                        className="text-sm text-amber-300/80"
-                      >
-                        Step {s.number}: {s.warning}
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            )}
           </div>
         )}
       </div>

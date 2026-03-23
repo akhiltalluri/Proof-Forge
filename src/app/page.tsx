@@ -4,52 +4,92 @@ import { useState, useCallback } from "react";
 import ProofInput from "@/components/ProofInput";
 import ProofOutput from "@/components/ProofOutput";
 import ApiKeyModal from "@/components/ApiKeyModal";
-import { ProofResult, ApiResponse } from "@/types/proof";
+import {
+  ProofResult,
+  ProofSuggestion,
+  PipelineStage,
+  ProofType,
+  ApiResponse,
+} from "@/types/proof";
 
 export default function Home() {
   const [result, setResult] = useState<ProofResult | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [stage, setStage] = useState<PipelineStage>("idle");
   const [error, setError] = useState<string | null>(null);
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [apiKey, setApiKey] = useState<string>("");
+  const [lastProof, setLastProof] = useState<string>("");
+
+  const isLoading = stage !== "idle" && stage !== "done";
 
   const hasKey =
     typeof window !== "undefined"
       ? !!(localStorage.getItem("proof-forge-api-key") || apiKey)
       : false;
 
-  const handleSubmit = useCallback(
-    async (proof: string) => {
-      setIsLoading(true);
+  const runPipeline = useCallback(
+    async (proof: string, forceType?: ProofType) => {
+      setStage("classifying");
       setError(null);
       setResult(null);
+      setLastProof(proof);
 
       const key =
         typeof window !== "undefined"
           ? localStorage.getItem("proof-forge-api-key") ?? apiKey
           : apiKey;
 
+      const stageTimer = setTimeout(() => setStage("polishing"), 2000);
+      const stageTimer2 = setTimeout(() => setStage("verifying"), 5000);
+      const stageTimer3 = setTimeout(() => setStage("suggesting"), 8000);
+
       try {
-        const res = await fetch("/api/rewrite", {
+        const res = await fetch("/api/forge", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ proof, apiKey: key || undefined }),
+          body: JSON.stringify({
+            proof,
+            apiKey: key || undefined,
+            proofType: forceType || undefined,
+          }),
         });
+
+        clearTimeout(stageTimer);
+        clearTimeout(stageTimer2);
+        clearTimeout(stageTimer3);
 
         const data: ApiResponse = await res.json();
 
         if (!data.success) {
           setError(data.error ?? "Something went wrong.");
+          setStage("idle");
         } else if (data.data) {
           setResult(data.data);
+          setStage("done");
         }
       } catch {
+        clearTimeout(stageTimer);
+        clearTimeout(stageTimer2);
+        clearTimeout(stageTimer3);
         setError("Network error. Please check your connection and try again.");
-      } finally {
-        setIsLoading(false);
+        setStage("idle");
       }
     },
     [apiKey]
+  );
+
+  const handleSubmit = useCallback(
+    (proof: string) => runPipeline(proof),
+    [runPipeline]
+  );
+
+  const handleRetryWithSuggestion = useCallback(
+    (suggestion: ProofSuggestion) => {
+      if (lastProof) {
+        runPipeline(lastProof, suggestion.proofType);
+      }
+    },
+    [lastProof, runPipeline]
   );
 
   return (
@@ -77,7 +117,7 @@ export default function Home() {
                 Proof Forge
               </h1>
               <p className="text-xs text-zinc-500">
-                Rough proof in, clean proof out
+                Polish, verify, and strengthen your proofs
               </p>
             </div>
           </div>
@@ -148,7 +188,12 @@ export default function Home() {
 
           <div className="grid gap-8 lg:grid-cols-2">
             <ProofInput onSubmit={handleSubmit} isLoading={isLoading} />
-            <ProofOutput result={result} isLoading={isLoading} />
+            <ProofOutput
+              result={result}
+              stage={stage}
+              onRetryWithSuggestion={handleRetryWithSuggestion}
+              isLoading={isLoading}
+            />
           </div>
         </div>
       </main>
@@ -156,8 +201,9 @@ export default function Home() {
       <footer className="border-t border-zinc-800/50 py-6">
         <div className="mx-auto max-w-7xl px-6">
           <p className="text-center text-xs text-zinc-600">
-            Proof Forge provides proof polishing and structural assistance, not
-            formal verification. Always verify results independently.
+            Proof Forge provides structural assistance and heuristic
+            verification, not formal proof checking. Always verify results
+            independently.
           </p>
         </div>
       </footer>
