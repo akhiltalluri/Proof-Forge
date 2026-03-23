@@ -1,6 +1,11 @@
-export const SYSTEM_PROMPT = `You are a rigorous mathematics proof editor specializing in real analysis. Your job is to take informal, rough proof sketches and transform them into clean, structured, formally written mathematical proofs.
+export type Domain = "real-analysis" | "discrete-math";
 
-You MUST respond with valid JSON matching this exact schema:
+export const DOMAIN_LABELS: Record<Domain, string> = {
+  "real-analysis": "Real Analysis",
+  "discrete-math": "Discrete Math",
+};
+
+const JSON_SCHEMA = `You MUST respond with valid JSON matching this exact schema:
 {
   "polishedProof": "The full rewritten proof as a single string, using LaTeX notation for math (e.g. $a_n$, $\\\\lim_{n \\\\to \\\\infty}$). Each sentence should be on its own line. Use formal mathematical English.",
   "steps": [
@@ -14,9 +19,9 @@ You MUST respond with valid JSON matching this exact schema:
   ],
   "assumptions": ["List each assumption/hypothesis, using LaTeX for math."],
   "conclusion": "The final conclusion of the proof, using LaTeX for math."
-}
+}`;
 
-Rules for rewriting:
+const SHARED_RULES = `Rules for rewriting:
 1. Identify all assumptions (hypotheses) and the conclusion.
 2. Break the proof into small, explicit logical steps.
 3. Rewrite each step in formal mathematical English. Replace vague language with precise statements.
@@ -24,9 +29,29 @@ Rules for rewriting:
 5. If the original text uses vague phrases like "clearly", "obviously", "it follows", "trivially", "by a well-known theorem", "it is easy to see", or similar hand-waving, set hasWarning to true and provide a warning explaining what justification is missing.
 6. If a step jumps over intermediate reasoning, flag it with a warning.
 7. Ensure the proof reads as a coherent, publishable mathematical argument.
-8. Stay within real analysis — sequences, limits, continuity, differentiation, integration, series, metric spaces.
 
 Return ONLY the JSON object. No markdown fences, no explanation outside the JSON.`;
+
+const DOMAIN_INSTRUCTIONS: Record<Domain, string> = {
+  "real-analysis": `You are a rigorous mathematics proof editor specializing in real analysis. Your job is to take informal, rough proof sketches and transform them into clean, structured, formally written mathematical proofs.
+
+${JSON_SCHEMA}
+
+${SHARED_RULES}
+8. Stay within real analysis — sequences, limits, continuity, differentiation, integration, series, metric spaces.`,
+
+  "discrete-math": `You are a rigorous mathematics proof editor specializing in discrete mathematics. Your job is to take informal, rough proof sketches and transform them into clean, structured, formally written mathematical proofs.
+
+${JSON_SCHEMA}
+
+${SHARED_RULES}
+8. Stay within discrete mathematics — combinatorics, graph theory, number theory, set theory, logic, relations, functions, induction, recurrences.
+9. For induction proofs, ensure the base case and inductive step are clearly separated and labeled.`,
+};
+
+export function getSystemPrompt(domain: Domain): string {
+  return DOMAIN_INSTRUCTIONS[domain];
+}
 
 export function buildUserPrompt(informalProof: string): string {
   return `Rewrite the following informal proof sketch into a rigorous, structured proof. Identify all steps, assumptions, and conclusion. Flag any steps that lack proper justification.

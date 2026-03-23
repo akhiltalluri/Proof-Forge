@@ -1,10 +1,11 @@
 import OpenAI from "openai";
 import { ProofResult } from "@/types/proof";
-import { SYSTEM_PROMPT, buildUserPrompt } from "./prompt";
+import { Domain, getSystemPrompt, buildUserPrompt } from "./prompt";
 
 export async function rewriteProof(
   informalProof: string,
-  apiKey: string
+  apiKey: string,
+  domain: Domain = "real-analysis"
 ): Promise<ProofResult> {
   const client = new OpenAI({ apiKey });
 
@@ -13,7 +14,7 @@ export async function rewriteProof(
     temperature: 0.3,
     max_tokens: 4096,
     messages: [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: getSystemPrompt(domain) },
       { role: "user", content: buildUserPrompt(informalProof) },
     ],
   });

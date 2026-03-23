@@ -5,6 +5,7 @@ import ProofInput from "@/components/ProofInput";
 import ProofOutput from "@/components/ProofOutput";
 import ApiKeyModal from "@/components/ApiKeyModal";
 import { ProofResult, ApiResponse } from "@/types/proof";
+import { Domain } from "@/lib/prompt";
 
 export default function Home() {
   const [result, setResult] = useState<ProofResult | null>(null);
@@ -19,7 +20,7 @@ export default function Home() {
       : false;
 
   const handleSubmit = useCallback(
-    async (proof: string) => {
+    async (proof: string, domain: Domain = "real-analysis") => {
       setIsLoading(true);
       setError(null);
       setResult(null);
@@ -33,7 +34,7 @@ export default function Home() {
         const res = await fetch("/api/rewrite", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ proof, apiKey: key || undefined }),
+          body: JSON.stringify({ proof, apiKey: key || undefined, domain }),
         });
 
         const data: ApiResponse = await res.json();

@@ -3,7 +3,7 @@ import { rewriteProof } from "@/lib/openai";
 
 export async function POST(req: NextRequest) {
   try {
-    const { proof, apiKey } = await req.json();
+    const { proof, apiKey, domain } = await req.json();
 
     if (!proof || typeof proof !== "string" || proof.trim().length === 0) {
       return NextResponse.json(
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await rewriteProof(proof.trim(), key);
+    const result = await rewriteProof(proof.trim(), key, domain || "real-analysis");
 
     return NextResponse.json({ success: true, data: result });
   } catch (err: unknown) {

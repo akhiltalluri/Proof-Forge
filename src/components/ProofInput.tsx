@@ -1,25 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import { Domain, DOMAIN_LABELS } from "@/lib/prompt";
 
 interface ProofInputProps {
-  onSubmit: (proof: string) => void;
+  onSubmit: (proof: string, domain: Domain) => void;
   isLoading: boolean;
 }
 
-const EXAMPLE_PROOF = `Let (a_n) be a convergent sequence with a_n → L. Since convergent sequences are bounded, a_n is bounded. Therefore there exists M such that |a_n| ≤ M for all n.`;
+const EXAMPLES: Record<Domain, string> = {
+  "real-analysis": `Let (a_n) be a convergent sequence with a_n → L. Since convergent sequences are bounded, a_n is bounded. Therefore there exists M such that |a_n| ≤ M for all n.`,
+  "discrete-math": `Prove that for all n ≥ 1, 1 + 2 + ... + n = n(n+1)/2. Base case is obvious. For the inductive step, assume it holds for n = k. Then adding k+1 to both sides gives the result for k+1.`,
+};
+
+const DOMAINS = Object.keys(DOMAIN_LABELS) as Domain[];
 
 export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
   const [text, setText] = useState("");
+  const [domain, setDomain] = useState<Domain>("real-analysis");
 
   const handleSubmit = () => {
     if (text.trim()) {
-      onSubmit(text.trim());
+      onSubmit(text.trim(), domain);
     }
   };
 
   const loadExample = () => {
-    setText(EXAMPLE_PROOF);
+    setText(EXAMPLES[domain]);
   };
 
   return (
@@ -28,11 +35,18 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
         <h2 className="text-lg font-semibold text-zinc-100">
           Informal Proof Sketch
         </h2>
-        <div className="flex items-center gap-2">
-          <span className="rounded-full bg-indigo-500/20 px-3 py-0.5 text-xs font-medium text-indigo-300 border border-indigo-500/30">
-            Real Analysis
-          </span>
-        </div>
+        <select
+          value={domain}
+          onChange={(e) => setDomain(e.target.value as Domain)}
+          disabled={isLoading}
+          className="rounded-full bg-indigo-500/15 px-3 py-1 text-xs font-medium text-indigo-300 border border-indigo-500/30 outline-none cursor-pointer transition-all hover:bg-indigo-500/25 disabled:opacity-40 appearance-none"
+        >
+          {DOMAINS.map((d) => (
+            <option key={d} value={d} className="bg-zinc-900 text-zinc-200">
+              {DOMAIN_LABELS[d]}
+            </option>
+          ))}
+        </select>
       </div>
 
       <textarea
