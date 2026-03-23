@@ -44,6 +44,13 @@ LaTeX formatting rules (CRITICAL — follow exactly):
 - Use standard notation: $\\forall$, $\\exists$, $\\in$, $\\leq$, $\\implies$, $\\mathbb{R}$, $\\mathbb{N}$, etc.
 - Every variable, number in a math context, operator, and formula must be inside $...$.
 - Plain English connectives (assume, then, therefore, since, by, hence) stay outside $...$.
+- NEVER use \\text{} for mathematical concepts. Use proper LaTeX commands instead:
+  - $\\in$ NOT $\\text{ in }$
+  - $\\mathbb{R}$ NOT $\\text{R}$
+  - $\\to$ NOT $\\text{to}$
+  - $\\subset$ NOT $\\text{ subset of }$
+  - $c \\in (a, b)$ NOT $c \\text{ in } (a, b)$
+- Since output is JSON, all backslashes in LaTeX must be double-escaped: write \\\\to not \\to, write \\\\in not \\in, write \\\\mathbb{R} not \\mathbb{R}.
 
 General rules:
 1. Identify all assumptions and the conclusion.
@@ -101,7 +108,10 @@ Score the proof 0–100 based on how solid the logical reasoning is:
 
 A proof "passes" verification only if score >= 70 and there are zero critical vulnerabilities.
 
-LaTeX in output fields: Use $...$ ONLY around mathematical expressions (variables, formulas, equations). Do NOT wrap plain English in $...$.
+LaTeX in output fields:
+- Use $...$ ONLY around mathematical expressions (variables, formulas, equations). Do NOT wrap plain English in $...$.
+- Use proper LaTeX commands: $\\in$ not $\\text{ in }$, $\\mathbb{R}$ not $\\text{R}$.
+- Since output is JSON, double-escape all backslashes: \\\\in, \\\\mathbb{R}, \\\\forall, etc.
 
 You MUST respond with valid JSON:
 {
@@ -149,6 +159,8 @@ For each suggestion:
 Valid proof types: ${PROOF_TYPE_LIST}.
 
 LaTeX: Use $...$ ONLY around mathematical expressions. Do NOT wrap plain English in $...$.
+Use proper LaTeX commands ($\\in$, $\\mathbb{R}$, $\\to$), never \\text{} for math.
+Since output is JSON, double-escape all backslashes: \\\\in, \\\\to, \\\\forall, etc.
 
 You MUST respond with valid JSON:
 {

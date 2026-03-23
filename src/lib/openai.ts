@@ -16,10 +16,24 @@ import {
 } from "./prompt";
 
 function cleanJson(raw: string): string {
-  return raw
+  let cleaned = raw
     .replace(/```json\s*/g, "")
     .replace(/```\s*/g, "")
     .trim();
+
+  // Fix LaTeX commands that collide with JSON escape sequences.
+  // When the model writes \text, \to, \forall, \beta, \rho etc. without
+  // double-escaping, JSON.parse interprets \t as tab, \f as form feed, etc.
+  // For \t, \b, \f, \r: broadly fix when followed by alpha chars — these
+  // control characters should never appear in mathematical proof text.
+  cleaned = cleaned.replace(/(?<!\\)\\([tbfr])(?=[a-zA-Z])/g, "\\\\$1");
+  // For \n: only fix known LaTeX command suffixes to preserve real newlines.
+  cleaned = cleaned.replace(
+    /(?<!\\)\\n(?=(eq|ot|abla|eg|otin|u[^a-zA-Z]|i[^a-zA-Z]|subseteq|rightarrow))/g,
+    "\\\\n"
+  );
+
+  return cleaned;
 }
 
 async function llm(
