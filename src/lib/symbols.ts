@@ -144,3 +144,16 @@ export function convertToLatex(text: string): string {
 export function hasLatexContent(text: string): boolean {
   return /\$[^$]+\$/.test(text) || /\\\(.*?\\\)/.test(text) || /\\\[[\s\S]*?\\]/.test(text);
 }
+
+export function stripLatexDelimiters(text: string): string {
+  return text
+    .replace(/\$\$([^$]+)\$\$/g, "$1")
+    .replace(/\$([^$]+)\$/g, "$1")
+    .replace(/\\\((.+?)\\\)/g, "$1")
+    .replace(/\\\[(.+?)\\]/g, "$1")
+    .replace(/\\(?:text|mathrm|mathbf|mathit|textbf|textit)\{([^}]*)\}/g, "$1")
+    .replace(/\\(?:left|right|big|Big|bigg|Bigg)[.!|()[\]{}]?/g, "")
+    .replace(/\\{/g, "{")
+    .replace(/\\}/g, "}")
+    .replace(/\\\\/g, "\n");
+}

@@ -7,6 +7,7 @@ import {
   PipelineStage,
   PROOF_TYPE_LABELS,
 } from "@/types/proof";
+import { stripLatexDelimiters } from "@/lib/symbols";
 import MathText from "./MathText";
 import StepCard from "./StepCard";
 import VerificationBadge from "./VerificationBadge";
@@ -50,7 +51,7 @@ export default function ProofOutput({
   isLoading,
 }: ProofOutputProps) {
   const [activeTab, setActiveTab] = useState<Tab>("proof");
-  const [showRaw, setShowRaw] = useState(false);
+  const [viewMode, setViewMode] = useState<"rendered" | "plain" | "raw">("rendered");
 
   const warningCount =
     result?.steps.filter((s) => s.hasWarning).length ?? 0;
@@ -119,9 +120,9 @@ export default function ProofOutput({
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "proof", label: "Polished Proof" },
+    { id: "structure", label: "Structure" },
     { id: "steps", label: "Steps" },
     { id: "verification", label: "Verification" },
-    { id: "structure", label: "Structure" },
   ];
 
   return (
@@ -167,36 +168,39 @@ export default function ProofOutput({
           <div className="rounded-xl border border-zinc-700/40 bg-zinc-800/30 p-5">
             <div className="flex items-center justify-end mb-3">
               <div className="flex items-center rounded-lg border border-zinc-700/50 p-0.5">
-                <button
-                  onClick={() => setShowRaw(false)}
-                  className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
-                    !showRaw
-                      ? "bg-zinc-700/60 text-zinc-100"
-                      : "text-zinc-500 hover:text-zinc-300"
-                  }`}
-                >
-                  Rendered
-                </button>
-                <button
-                  onClick={() => setShowRaw(true)}
-                  className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
-                    showRaw
-                      ? "bg-zinc-700/60 text-zinc-100"
-                      : "text-zinc-500 hover:text-zinc-300"
-                  }`}
-                >
-                  Raw
-                </button>
+                {(["rendered", "plain", "raw"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => setViewMode(mode)}
+                    className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
+                      viewMode === mode
+                        ? "bg-zinc-700/60 text-zinc-100"
+                        : "text-zinc-500 hover:text-zinc-300"
+                    }`}
+                  >
+                    {mode === "rendered"
+                      ? "Rendered"
+                      : mode === "plain"
+                        ? "Plain Text"
+                        : "Raw LaTeX"}
+                  </button>
+                ))}
               </div>
             </div>
-            {showRaw ? (
-              <pre className="whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-300 font-mono">
-                {result.polishedProof}
-              </pre>
-            ) : (
+            {viewMode === "rendered" && (
               <MathText className="text-sm leading-relaxed text-zinc-200 proof-text">
                 {result.polishedProof}
               </MathText>
+            )}
+            {viewMode === "plain" && (
+              <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-200">
+                {stripLatexDelimiters(result.polishedProof)}
+              </div>
+            )}
+            {viewMode === "raw" && (
+              <pre className="whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-300 font-mono">
+                {result.polishedProof}
+              </pre>
             )}
           </div>
         )}
