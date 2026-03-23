@@ -50,37 +50,58 @@ It also tags broad mathematical domains such as:
 
 ## Demo Mode
 
-Demo mode is meant for local testing, screenshots, videos, and portfolio walkthroughs.
+Demo mode is the easiest way to try the app without spending API credits.
 
-Instead of calling the live OpenAI pipeline, the app returns prebuilt proof results for a small set of sample proof sketches. That means you can click through the full Forge experience, inspect proof tabs, verification output, and suggestions, and demo the UI without needing API credits.
+When it is enabled, the Forge page exposes `Run Demo` buttons that return canned proof results instead of calling OpenAI. The point is to let you test the UI, inspect proof tabs, record walkthroughs, and take screenshots with stable outputs.
 
-Demo mode is useful when you want to:
+### How to set it up
 
-- test the product flow quickly
-- record a demo without relying on network/API availability
-- let someone review the project without giving them an API key
-- generate predictable screenshots with stable outputs
+1. Create a local env file if you do not already have one:
 
-Set this in `.env.local`:
+```bash
+cp .env.example .env.local
+```
+
+2. Open `.env.local` and turn demo mode on:
 
 ```env
 DEMO_MODE=true
 ```
 
-Then restart the dev server:
+3. Decide whether you want demo-only mode or demo + live mode:
+
+Demo-only mode:
+
+```env
+DEMO_MODE=true
+```
+
+Demo + live API mode:
+
+```env
+OPENAI_API_KEY=sk-your-real-key-here
+DEMO_MODE=true
+```
+
+If `OPENAI_API_KEY` is omitted, the demo buttons will still work, but live forging will require entering a key in the UI later.
+
+4. Restart the dev server after changing `.env.local`:
 
 ```bash
 npm run dev
 ```
 
-When demo mode is enabled:
+5. Open the app:
 
-- the Forge page shows `Run Demo` buttons
-- those buttons load canned proof results instantly
-- no OpenAI request is made for those demo runs
-- demo runs are meant for exploration and UI testing, not model evaluation
+```text
+http://localhost:3000
+```
 
-Current demo fixtures include:
+### What you should see
+
+If setup worked correctly, the Forge page will show a small demo-mode message near the top and a `Demo Mode` box with several `Run Demo` buttons.
+
+Those demo buttons load canned proof results instantly, including:
 
 - direct proof
 - contradiction proof
@@ -90,11 +111,21 @@ Current demo fixtures include:
 - combinatorial proof
 - set-theoretic proof
 
-Important detail:
+### What demo mode does and does not do
 
-- demo mode does not replace the live model entirely
-- it adds a parallel no-credit path for testing
-- if you also set `OPENAI_API_KEY`, you can still use the normal live Forge flow alongside demo fixtures
+Demo mode does:
+
+- let you test the main product flow without API credits
+- let you inspect proof tabs, verification output, and suggestions
+- make screenshots and videos easier because outputs are predictable
+
+Demo mode does not:
+
+- replace the live model entirely
+- test actual OpenAI responses
+- measure model quality
+
+It is a parallel no-credit path for testing. If you also set `OPENAI_API_KEY`, you can use both demo fixtures and normal live forging in the same local app.
 
 ## Architecture
 
