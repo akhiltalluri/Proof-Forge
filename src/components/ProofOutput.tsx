@@ -7,7 +7,7 @@ import {
   PipelineStage,
   PROOF_TYPE_LABELS,
 } from "@/types/proof";
-import { stripLatexDelimiters } from "@/lib/symbols";
+import { hasLatexContent } from "@/lib/symbols";
 import MathText from "./MathText";
 import StepCard from "./StepCard";
 import VerificationBadge from "./VerificationBadge";
@@ -51,7 +51,7 @@ export default function ProofOutput({
   isLoading,
 }: ProofOutputProps) {
   const [activeTab, setActiveTab] = useState<Tab>("proof");
-  const [viewMode, setViewMode] = useState<"rendered" | "plain" | "raw">("rendered");
+  const [viewMode, setViewMode] = useState<"rendered" | "preview" | "raw">("rendered");
 
   const warningCount =
     result?.steps.filter((s) => s.hasWarning).length ?? 0;
@@ -168,7 +168,7 @@ export default function ProofOutput({
           <div className="rounded-xl border border-zinc-700/40 bg-zinc-800/30 p-5">
             <div className="flex items-center justify-end mb-3">
               <div className="flex items-center rounded-lg border border-zinc-700/50 p-0.5">
-                {(["rendered", "plain", "raw"] as const).map((mode) => (
+                {(["rendered", "preview", "raw"] as const).map((mode) => (
                   <button
                     key={mode}
                     onClick={() => setViewMode(mode)}
@@ -180,8 +180,8 @@ export default function ProofOutput({
                   >
                     {mode === "rendered"
                       ? "Rendered"
-                      : mode === "plain"
-                        ? "Plain Text"
+                      : mode === "preview"
+                        ? "LaTeX Preview"
                         : "Raw LaTeX"}
                   </button>
                 ))}
@@ -192,9 +192,27 @@ export default function ProofOutput({
                 {result.polishedProof}
               </MathText>
             )}
-            {viewMode === "plain" && (
-              <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-200">
-                {stripLatexDelimiters(result.polishedProof)}
+            {viewMode === "preview" && (
+              <div className="rounded-xl border border-zinc-700/50 bg-zinc-800/30 p-4">
+                <div className="mb-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                    LaTeX Preview
+                  </span>
+                </div>
+                {hasLatexContent(result.polishedProof) ? (
+                  <MathText className="text-sm leading-relaxed text-zinc-300">
+                    {result.polishedProof}
+                  </MathText>
+                ) : (
+                  <div>
+                    <p className="mb-2 text-xs text-amber-400/80">
+                      No LaTeX expressions detected in the polished proof.
+                    </p>
+                    <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-400">
+                      {result.polishedProof}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             {viewMode === "raw" && (
