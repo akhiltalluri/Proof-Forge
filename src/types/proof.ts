@@ -57,6 +57,12 @@ export type WarningCategory =
   | "quantifier_error"
   | "other";
 
+export type VerificationDimensionId =
+  | "logical_validity"
+  | "justification"
+  | "completeness"
+  | "precision";
+
 export interface ProofStep {
   number: number;
   statement: string;
@@ -79,6 +85,16 @@ export interface VerificationResult {
   score: number;
   summary: string;
   vulnerabilities: Vulnerability[];
+  rubric?: VerificationRubricItem[];
+}
+
+export interface VerificationRubricItem {
+  id: VerificationDimensionId;
+  label: string;
+  weight: number;
+  weightReason: string;
+  score: number;
+  diagnosis: string;
 }
 
 export interface ProofSuggestion {

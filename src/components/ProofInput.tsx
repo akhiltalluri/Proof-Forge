@@ -2,10 +2,16 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import { DEMO_FIXTURES } from "@/lib/demo-fixtures";
-import { getRandomExample, ProofExample } from "@/lib/examples";
+import {
+  EXAMPLE_COUNT,
+  EXAMPLE_VERIFICATION_LABELS,
+  getRandomExample,
+  ProofExample,
+} from "@/lib/examples";
 import { MATH_DOMAIN_LABELS, PROOF_TYPE_LABELS, DemoFixtureId } from "@/types/proof";
 import {
   SYMBOL_GROUPS,
+  convertToLatex,
   replaceLatexShortcuts,
   hasLatexContent,
 } from "@/lib/symbols";
@@ -52,7 +58,7 @@ export default function ProofInput({
     const { example, index } = getRandomExample(lastExampleIdx.current);
     lastExampleIdx.current = index;
     setActiveExample(example);
-    setText(example.text);
+    setText(convertToLatex(example.text));
   };
 
   const insertSymbol = useCallback(
@@ -84,6 +90,7 @@ export default function ProofInput({
   };
 
   const latexDetected = hasLatexContent(text);
+  const activeExampleText = activeExample ? convertToLatex(activeExample.text) : "";
 
   return (
     <div className="surface-panel flex flex-col rounded-[26px] p-5 sm:p-6">
@@ -152,7 +159,7 @@ export default function ProofInput({
               Example Bank
             </p>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
-              Labeled examples span analysis, algebra, combinatorics, discrete math, and set theory.
+              {EXAMPLE_COUNT} labeled examples span major proof styles, multiple branches of math, and a range of verification quality from polished sketches to shaky drafts.
             </p>
           </div>
           <button
@@ -178,10 +185,29 @@ export default function ProofInput({
               <span className="rounded-full border border-zinc-300 px-2 py-0.5 text-[10px] font-semibold text-zinc-600 dark:border-zinc-600 dark:text-zinc-300">
                 {activeExample.difficulty}
               </span>
+              <span
+                className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                  activeExample.verification === "sound"
+                    ? "border-emerald-500/25 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                    : activeExample.verification === "mixed"
+                      ? "border-amber-500/25 bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                      : "border-rose-500/25 bg-rose-500/15 text-rose-700 dark:text-rose-300"
+                }`}
+              >
+                {EXAMPLE_VERIFICATION_LABELS[activeExample.verification]}
+              </span>
             </div>
             <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
               Pitfall to watch: {activeExample.pitfall}
             </p>
+            <div className="mt-3 rounded-lg border border-zinc-200/80 bg-zinc-50/80 p-3 dark:border-zinc-700/50 dark:bg-zinc-950/40">
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                Example Sketch
+              </p>
+              <MathText className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+                {activeExampleText}
+              </MathText>
+            </div>
           </div>
         )}
       </div>

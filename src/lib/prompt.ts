@@ -1,8 +1,15 @@
 import { ProofType } from "@/types/proof";
+import { VERIFICATION_RUBRIC_CONFIG } from "./verification";
 
 const PROOF_TYPE_LIST = `"direct", "contradiction", "contrapositive", "induction", "construction", "cases", "uniqueness", "epsilon_delta", "algebraic", "combinatorial", "set_identity"`;
 const DOMAIN_LIST = `"analysis", "algebra", "combinatorics", "discrete_math", "topology", "number_theory", "set_theory", "geometry", "general"`;
 const WARNING_LIST = `"unjustified_implication", "missing_base_case", "undefined_variable", "vague_existence", "skipped_algebra", "quantifier_error", "other"`;
+const VERIFICATION_DIMENSION_LIST = VERIFICATION_RUBRIC_CONFIG.map(
+  (item) => `"${item.id}"`
+).join(", ");
+const VERIFICATION_DIMENSION_GUIDE = VERIFICATION_RUBRIC_CONFIG.map(
+  (item) => `- "${item.id}" (${item.weight} points): ${item.label}. ${item.weightReason}`
+).join("\n");
 
 // ── Stage 1: Classify + Polish (single call) ──────────────────────────
 
@@ -107,15 +114,18 @@ Severity levels:
 - "major": A significant gap that undermines confidence (e.g., missing case, unjustified bound).
 - "minor": A small imprecision that doesn't break the proof but should be fixed (e.g., missing quantifier, imprecise wording).
 
-Score the proof 0–100 based on how solid the logical reasoning is:
-- 95–100: Publishable quality. Every step is fully justified, all quantifiers are correct, no gaps whatsoever.
-- 85–94: Rigorous proof with only cosmetic issues — minor notation inconsistencies or phrasing that could be tightened.
-- 70–84: Structurally sound but has minor logical gaps, missing quantifiers, or steps that could use more justification.
-- 50–69: Has major gaps that need addressing — missing cases, unjustified leaps, or steps that don't follow.
-- 25–49: Fundamentally flawed logic, circular reasoning, or critical misapplication of theorems.
-- 0–24: Not a valid proof — the argument does not establish the claimed result.
+Use this fixed weighted rubric. The application will compute the final score from these category scores, so your category judgments must be honest and specific:
+${VERIFICATION_DIMENSION_GUIDE}
 
-A proof "passes" verification only if score >= 70 and there are zero critical vulnerabilities.
+Category scoring guidance:
+- 95–100: Excellent in that category with no meaningful weakness.
+- 85–94: Strong with only minor tightening needed.
+- 70–84: Acceptable but with visible gaps or imprecision.
+- 50–69: Significant weaknesses in that category.
+- 25–49: Severe problems that seriously undermine confidence.
+- 0–24: The category is fundamentally broken.
+
+The application will mark a proof as passing only if the final weighted score is at least 70 and there are zero critical vulnerabilities.
 
 LaTeX in output fields:
 - Use $...$ ONLY around mathematical expressions (variables, formulas, equations). Do NOT wrap plain English in $...$.
@@ -124,9 +134,14 @@ LaTeX in output fields:
 
 You MUST respond with valid JSON:
 {
-  "passed": true or false,
-  "score": 0-100,
   "summary": "1-2 sentence overall assessment.",
+  "rubric": [
+    {
+      "id": "one of ${VERIFICATION_DIMENSION_LIST}",
+      "score": 0-100,
+      "diagnosis": "1-2 sentences explaining why points were kept or docked in this category."
+    }
+  ],
   "vulnerabilities": [
     {
       "step": 1,
@@ -138,6 +153,7 @@ You MUST respond with valid JSON:
   ]
 }
 
+Return exactly one rubric entry for each category listed above.
 If the proof is solid, vulnerabilities should be an empty array.
 Return ONLY the JSON object. No markdown fences.`;
 

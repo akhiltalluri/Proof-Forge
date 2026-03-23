@@ -9,9 +9,11 @@ import {
   MATH_DOMAIN_LABELS,
 } from "@/types/proof";
 import { convertToLatex, hasLatexContent } from "@/lib/symbols";
+import { normalizeVerificationResult } from "@/lib/verification";
 import MathText from "./MathText";
 import StepCard from "./StepCard";
 import VerificationBadge from "./VerificationBadge";
+import VerificationBreakdown from "./VerificationBreakdown";
 import VulnerabilityCard from "./VulnerabilityCard";
 import SuggestionCard from "./SuggestionCard";
 
@@ -132,6 +134,8 @@ export default function ProofOutput({
     );
   }
 
+  const verification = normalizeVerificationResult(result.verification);
+
   const tabs: { id: Tab; label: string }[] = [
     { id: "proof", label: "Polished Proof" },
     { id: "structure", label: "Structure" },
@@ -159,7 +163,7 @@ export default function ProofOutput({
 
       <div className="mb-4">
         <VerificationBadge
-          verification={result.verification}
+          verification={verification}
           proofTypeLabel={PROOF_TYPE_LABELS[result.proofType]}
         />
       </div>
@@ -278,12 +282,14 @@ export default function ProofOutput({
 
         {activeTab === "verification" && (
           <div className="flex flex-col gap-4">
+            <VerificationBreakdown verification={verification} />
+
             {vulnCount > 0 ? (
               <>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                   Vulnerabilities Found ({vulnCount})
                 </h3>
-                {result.verification.vulnerabilities.map((v, i) => (
+                {verification.vulnerabilities.map((v, i) => (
                   <VulnerabilityCard key={i} vulnerability={v} />
                 ))}
               </>

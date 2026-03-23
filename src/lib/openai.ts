@@ -20,6 +20,7 @@ import {
   normalizeProofType,
   normalizeWarningCategory,
 } from "./proof-taxonomy";
+import { normalizeVerificationResult } from "./verification";
 
 function cleanJson(raw: string): string {
   let cleaned = raw
@@ -117,19 +118,14 @@ export async function verifyProof(
     0.4
   );
   const parsed = JSON.parse(raw) as VerificationResult;
-  if (typeof parsed.passed !== "boolean" || typeof parsed.score !== "number") {
+  if (typeof parsed.summary !== "string") {
     throw new Error("Invalid verification response");
   }
   parsed.vulnerabilities = (parsed.vulnerabilities || []).map((v) => ({
     ...v,
     category: normalizeWarningCategory(v.category),
   }));
-  parsed.score = Math.max(0, Math.min(100, Math.round(parsed.score)));
-  const hasCritical = parsed.vulnerabilities.some(
-    (v) => v.severity === "critical"
-  );
-  parsed.passed = parsed.score >= 70 && !hasCritical;
-  return parsed;
+  return normalizeVerificationResult(parsed);
 }
 
 export async function suggestAlternatives(
