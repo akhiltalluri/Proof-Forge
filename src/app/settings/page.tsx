@@ -127,7 +127,7 @@ export default function SettingsPage() {
           OpenAI API Key
         </h2>
         <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-          Stored locally in your browser. Never sent to our servers.
+          Stored in your browser and sent only to this app&apos;s API routes when you forge (proxied to OpenAI). Not stored in the SQLite database.
         </p>
         <div className="mt-3 flex gap-2">
           <input
@@ -165,10 +165,7 @@ export default function SettingsPage() {
           About Proof Forge
         </h2>
         <p className="mt-1.5 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-          A personal tool that transforms rough mathematical proof sketches into
-          structured, rigorous proofs. Built by Akhil Talluri as a passion
-          project for anyone who writes proofs and wants quick structural
-          feedback.
+          Proof-writing helper for clearer structure and heuristic gap-checks across many areas of math — not formal verification. Built by Akhil Talluri as a passion project.
         </p>
         <div className="mt-3 flex items-center gap-4">
           <span className="text-[10px] text-zinc-400 dark:text-zinc-500">

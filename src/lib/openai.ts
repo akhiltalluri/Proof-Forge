@@ -5,6 +5,7 @@ import {
   ProofResult,
   VerificationResult,
   ProofSuggestion,
+  MathDomain,
 } from "@/types/proof";
 import {
   CLASSIFY_AND_POLISH_PROMPT,
@@ -14,6 +15,7 @@ import {
   SUGGEST_PROMPT,
   buildSuggestPrompt,
 } from "./prompt";
+import { normalizeMathDomain, normalizeProofType } from "./proof-type-guard";
 
 function cleanJson(raw: string): string {
   let cleaned = raw
@@ -59,6 +61,7 @@ async function llm(
 
 interface ClassifyAndPolishResult {
   proofType: ProofType;
+  mathDomain?: MathDomain;
   polishedProof: string;
   steps: ProofStep[];
   assumptions: string[];
@@ -80,6 +83,10 @@ export async function classifyAndPolish(
   if (!parsed.polishedProof || !Array.isArray(parsed.steps)) {
     throw new Error("Invalid classify+polish response");
   }
+  parsed.proofType = normalizeProofType(parsed.proofType);
+  const domain = normalizeMathDomain(parsed.mathDomain as string | undefined);
+  if (domain) parsed.mathDomain = domain;
+  else delete parsed.mathDomain;
   return parsed;
 }
 
@@ -105,6 +112,18 @@ export async function verifyProof(
   const parsed = JSON.parse(raw) as VerificationResult;
   if (typeof parsed.passed !== "boolean" || typeof parsed.score !== "number") {
     throw new Error("Invalid verification response");
+  }
+  const warnCats = new Set([
+    "unjustified_implication",
+    "missing_base_case",
+    "undefined_variable",
+    "vague_existence",
+    "skipped_algebra",
+    "quantifier_error",
+    "other",
+  ]);
+  for (const v of parsed.vulnerabilities) {
+    if (v.category && !warnCats.has(v.category)) delete v.category;
   }
   parsed.score = Math.max(0, Math.min(100, Math.round(parsed.score)));
   const hasCritical = parsed.vulnerabilities.some(
@@ -137,6 +156,9 @@ export async function suggestAlternatives(
   if (!Array.isArray(parsed.suggestions)) {
     throw new Error("Invalid suggestions response");
   }
+  for (const s of parsed.suggestions) {
+    s.proofType = normalizeProofType(s.proofType);
+  }
   return parsed.suggestions;
 }
 
@@ -153,7 +175,12 @@ export async function forgeProof(
   );
 
   const result: ProofResult = {
-    ...polished,
+    proofType: polished.proofType,
+    mathDomain: polished.mathDomain,
+    polishedProof: polished.polishedProof,
+    steps: polished.steps,
+    assumptions: polished.assumptions,
+    conclusion: polished.conclusion,
     verification,
   };
 

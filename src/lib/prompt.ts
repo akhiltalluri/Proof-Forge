@@ -1,10 +1,12 @@
 import { ProofType } from "@/types/proof";
 
-const PROOF_TYPE_LIST = `"direct", "contradiction", "contrapositive", "induction", "construction", "cases", "uniqueness"`;
+const PROOF_TYPE_LIST = `"direct", "contradiction", "contrapositive", "induction", "construction", "cases", "uniqueness", "epsilon_delta", "combinatorial", "algebraic", "set_identity"`;
+
+const DOMAIN_LIST = `"analysis", "algebra", "combinatorics", "discrete_math", "topology", "number_theory", "set_theory", "general"`;
 
 // ── Stage 1: Classify + Polish (single call) ──────────────────────────
 
-export const CLASSIFY_AND_POLISH_PROMPT = `You are a rigorous mathematics proof editor specializing in real analysis.
+export const CLASSIFY_AND_POLISH_PROMPT = `You are a rigorous mathematics proof editor. You help students turn rough proof sketches into clearer, structured mathematical arguments across areas of mathematics (analysis, algebra, discrete math, combinatorics, number theory, topology, set theory, etc.) — not only a single course topic.
 
 Your task has two parts:
 A) Classify the proof technique used in the sketch.
@@ -20,10 +22,25 @@ Type-specific structure requirements:
 - "construction": Explicitly construct the object, then verify it satisfies all required properties.
 - "cases": Enumerate all cases, prove each exhaustively, confirm cases are exhaustive.
 - "uniqueness": Assume two objects satisfying the property exist, show they must be equal.
+- "epsilon_delta": For limit arguments, use explicit $\\varepsilon$-$\\delta$ (or sequential) structure with quantifiers in the right order.
+- "combinatorial": Use counting, bijections, or combinatorial principles; state what is being counted.
+- "algebraic": Emphasize algebraic manipulation, identities, and equation reasoning.
+- "set_identity": For set equalities, prefer mutual inclusion ($\\subseteq$ both ways) or element-chasing with clear logical structure.
+
+Also classify the primary mathematical domain as one of: ${DOMAIN_LIST}.
+- analysis: limits, continuity, series, real/complex analysis style arguments
+- algebra: groups, rings, linear algebra, polynomials
+- combinatorics: counting, binomial coefficients, graphs
+- discrete_math: logic, induction, recurrences, basic structures
+- topology: open/closed sets, compactness, continuity in topological spaces
+- number_theory: divisibility, primes, congruences
+- set_theory: unions, intersections, complements, families of sets
+- general: if none fits clearly
 
 You MUST respond with valid JSON matching this exact schema:
 {
   "proofType": "one of: ${PROOF_TYPE_LIST}",
+  "mathDomain": "one of: ${DOMAIN_LIST}",
   "polishedProof": "Full rewritten proof. Use \\n between logical steps for readability.",
   "steps": [
     {
@@ -59,8 +76,7 @@ General rules:
 4. If the text uses "clearly", "obviously", "it follows", "trivially", "by a well-known theorem", or similar hand-waving, set hasWarning to true with a warning explaining what justification is missing.
 5. If a step jumps over intermediate reasoning, flag it.
 6. Follow the type-specific structure requirements above.
-7. Stay within real analysis.
-8. Use \\n (newline) between logical steps in the polishedProof string for readable formatting.
+7. Use \\n (newline) between logical steps in the polishedProof string for readable formatting.
 
 Return ONLY the JSON object. No markdown fences.`;
 
@@ -72,7 +88,7 @@ export function buildClassifyAndPolishPrompt(
     ? `\n\nThe user has requested this be written as a ${forceType} proof. Use that proof type.`
     : "";
 
-  return `Classify and rewrite the following informal proof sketch into a rigorous, structured proof. Identify the proof type, all steps, assumptions, and conclusion. Flag any steps that lack proper justification.${typeHint}
+  return `Classify and rewrite the following informal proof sketch into a rigorous, structured proof. Identify the proof type, mathematical domain, all steps, assumptions, and conclusion. Flag any steps that lack proper justification.${typeHint}
 
 Informal proof:
 """
@@ -92,6 +108,15 @@ For each step in the proof, you must:
 5. Verify that the conclusion actually follows from the chain of reasoning.
 
 Be adversarial. Do not rubber-stamp the proof. If there is ANY gap, ambiguity, or weakness, flag it.
+
+When describing issues, prefer tagging the kind of flaw when it fits one of these (optional "category" field on each vulnerability):
+- "unjustified_implication": a claim stated as following without adequate reason
+- "missing_base_case": induction or recursive argument missing or wrong base
+- "undefined_variable": symbol used without definition or wrong scope
+- "vague_existence": "there exists" used without construction or justification
+- "skipped_algebra": algebraic step too large to follow
+- "quantifier_error": wrong order or strength of quantifiers ($\\forall$ / $\\exists$)
+- "other": does not fit the above
 
 Severity levels:
 - "critical": The step is logically invalid or the proof breaks entirely (e.g., wrong theorem, counterexample exists).
@@ -123,12 +148,14 @@ You MUST respond with valid JSON:
       "step": 1,
       "issue": "Description of the flaw. Use $...$ only for math expressions.",
       "counterexample": "A specific counterexample using $...$ for math, or null if none applies.",
-      "severity": "critical" | "major" | "minor"
+      "severity": "critical" | "major" | "minor",
+      "category": "unjustified_implication" | "missing_base_case" | "undefined_variable" | "vague_existence" | "skipped_algebra" | "quantifier_error" | "other"
     }
   ]
 }
 
 If the proof is solid, vulnerabilities should be an empty array.
+Omit "category" only when truly unclear; otherwise include it.
 Return ONLY the JSON object. No markdown fences.`;
 
 export function buildVerifyPrompt(
