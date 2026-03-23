@@ -9,6 +9,7 @@ import {
 } from "@/lib/library-data";
 import { formatLibraryType, getLibraryDetail } from "@/lib/library-detail";
 import MathText from "@/components/MathText";
+import { convertToLatex } from "@/lib/symbols";
 
 export default function LibraryPage() {
   const [search, setSearch] = useState("");
@@ -289,9 +290,9 @@ function EntryDetailModal({
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
               In Simpler Language
             </h3>
-            <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-              {detail.explanation}
-            </p>
+            <MathText className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+              {convertToLatex(detail.explanation)}
+            </MathText>
           </section>
 
           <section className="rounded-[24px] border border-zinc-200 bg-zinc-50/90 p-5 dark:border-zinc-700/50 dark:bg-zinc-800/30">
@@ -304,9 +305,30 @@ function EntryDetailModal({
                   key={`${entry.id}-example-${index}`}
                   className="rounded-2xl border border-zinc-200 bg-white/90 p-4 dark:border-zinc-700 dark:bg-zinc-900/50"
                 >
-                  <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-                    {example}
+                  <MathText className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+                    {convertToLatex(example)}
+                  </MathText>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-[24px] border border-zinc-200 bg-zinc-50/90 p-5 dark:border-zinc-700/50 dark:bg-zinc-800/30">
+            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
+              Practice Problems
+            </h3>
+            <div className="grid gap-3">
+              {detail.problems.map((problem, index) => (
+                <div
+                  key={`${entry.id}-problem-${index}`}
+                  className="rounded-2xl border border-zinc-200 bg-white/90 p-4 dark:border-zinc-700 dark:bg-zinc-900/50"
+                >
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">
+                    Problem {index + 1}
                   </p>
+                  <MathText className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+                    {convertToLatex(problem)}
+                  </MathText>
                 </div>
               ))}
             </div>
