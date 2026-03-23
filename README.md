@@ -1,6 +1,6 @@
 # Proof Forge
 
-A proof-polishing tool for real analysis. Paste a rough sketch, get back a structured proof with numbered steps and flagged gaps.
+A personal project for polishing rough real-analysis proofs. Paste an informal sketch, get back a structured proof with numbered steps and flagged gaps.
 
 ## What it does
 
@@ -10,7 +10,7 @@ You write something like:
 
 Proof Forge rewrites it into clean, step-by-step mathematical prose, flags anything hand-wavy ("clearly", "it follows", etc.), and pulls out the assumptions and conclusion so you can see the skeleton of your argument.
 
-This is **structural assistance**, not formal verification — no Lean, no Coq, no correctness guarantees.
+This is **structural assistance**, not formal verification — no Lean, no Coq, no correctness guarantees. I built this because I wanted a faster way to clean up my own proof drafts.
 
 ## Features
 
@@ -18,6 +18,7 @@ This is **structural assistance**, not formal verification — no Lean, no Coq, 
 - Extracts numbered proof steps with explicit justifications
 - Flags vague or unsupported claims that need citations
 - Shows proof structure (assumptions / conclusion) at a glance
+- 30 built-in example proofs spanning core real analysis topics
 - Renders LaTeX math via KaTeX
 
 ## Setup
@@ -47,14 +48,14 @@ The app runs at [localhost:3000](http://localhost:3000).
 
 ## How it works
 
-1. User pastes an informal proof sketch (scoped to real analysis).
-2. The server sends it to GPT-4o-mini with a prompt engineered for step decomposition, formal rewriting, and gap detection.
+1. Paste an informal proof sketch (scoped to real analysis).
+2. The server sends it to GPT-4o-mini with a prompt tuned for step decomposition, formal rewriting, and gap detection.
 3. The model returns structured JSON — polished proof, steps, assumptions, conclusion, and any warnings.
 4. The frontend renders it with KaTeX math, tabbed views, and inline warning badges.
 
 ## Domain
 
-Currently scoped to **real analysis**: sequences, limits, continuity, differentiation, integration, series, metric spaces.
+Currently focused on **real analysis**: sequences, limits, continuity, differentiation, integration, series, metric spaces.
 
 ## Built with
 

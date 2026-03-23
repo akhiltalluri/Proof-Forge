@@ -1,61 +1,176 @@
 "use client";
 
-import { useState } from "react";
-import { Domain, DOMAIN_LABELS } from "@/lib/prompt";
+import { useRef, useState, useCallback } from "react";
+import { getRandomExample } from "@/lib/examples";
+import {
+  SYMBOL_GROUPS,
+  replaceLatexShortcuts,
+  hasLatexContent,
+} from "@/lib/symbols";
+import MathText from "./MathText";
 
 interface ProofInputProps {
-  onSubmit: (proof: string, domain: Domain) => void;
+  onSubmit: (proof: string) => void;
   isLoading: boolean;
 }
 
-const EXAMPLES: Record<Domain, string> = {
-  "real-analysis": `Let (a_n) be a convergent sequence with a_n → L. Since convergent sequences are bounded, a_n is bounded. Therefore there exists M such that |a_n| ≤ M for all n.`,
-  "discrete-math": `Prove that for all n ≥ 1, 1 + 2 + ... + n = n(n+1)/2. Base case is obvious. For the inductive step, assume it holds for n = k. Then adding k+1 to both sides gives the result for k+1.`,
-};
-
-const DOMAINS = Object.keys(DOMAIN_LABELS) as Domain[];
-
 export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
   const [text, setText] = useState("");
-  const [domain, setDomain] = useState<Domain>("real-analysis");
+  const [showToolbar, setShowToolbar] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
+  const lastExampleIdx = useRef<number | undefined>(undefined);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = () => {
     if (text.trim()) {
-      onSubmit(text.trim(), domain);
+      onSubmit(text.trim());
     }
   };
 
   const loadExample = () => {
-    setText(EXAMPLES[domain]);
+    const { text: example, index } = getRandomExample(lastExampleIdx.current);
+    lastExampleIdx.current = index;
+    setText(example);
   };
 
+  const insertSymbol = useCallback(
+    (symbol: string) => {
+      const ta = textareaRef.current;
+      if (!ta) {
+        setText((prev) => prev + symbol);
+        return;
+      }
+
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      const before = text.slice(0, start);
+      const after = text.slice(end);
+      const newText = before + symbol + after;
+      setText(newText);
+
+      requestAnimationFrame(() => {
+        ta.focus();
+        const cursor = start + symbol.length;
+        ta.setSelectionRange(cursor, cursor);
+      });
+    },
+    [text]
+  );
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setText(replaceLatexShortcuts(e.target.value));
+  };
+
+  const latexDetected = hasLatexContent(text);
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold text-zinc-100">
           Informal Proof Sketch
         </h2>
-        <select
-          value={domain}
-          onChange={(e) => setDomain(e.target.value as Domain)}
-          disabled={isLoading}
-          className="rounded-full bg-indigo-500/15 px-3 py-1 text-xs font-medium text-indigo-300 border border-indigo-500/30 outline-none cursor-pointer transition-all hover:bg-indigo-500/25 disabled:opacity-40 appearance-none"
-        >
-          {DOMAINS.map((d) => (
-            <option key={d} value={d} className="bg-zinc-900 text-zinc-200">
-              {DOMAIN_LABELS[d]}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setShowPreview((v) => !v)}
+            className={`rounded-lg border px-2.5 py-1 text-[11px] transition-all ${
+              showPreview
+                ? "border-indigo-500/40 bg-indigo-500/10 text-indigo-300"
+                : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+            }`}
+            title={showPreview ? "Hide LaTeX preview" : "Show LaTeX preview"}
+          >
+            {showPreview ? "Hide Preview" : "Preview LaTeX"}
+          </button>
+          <button
+            onClick={() => setShowToolbar((v) => !v)}
+            className={`rounded-lg border px-2.5 py-1 text-[11px] transition-all ${
+              showToolbar
+                ? "border-indigo-500/40 bg-indigo-500/10 text-indigo-300"
+                : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+            }`}
+            title={showToolbar ? "Hide symbol toolbar" : "Show symbol toolbar"}
+          >
+            {showToolbar ? "Hide Symbols" : "Show Symbols"}
+          </button>
+        </div>
       </div>
 
+      {showToolbar && (
+        <div className="mb-2 rounded-xl border border-zinc-700/50 bg-zinc-800/40 p-2.5 overflow-x-auto">
+          <div className="flex flex-col gap-2">
+            {SYMBOL_GROUPS.map((group) => (
+              <div key={group.label} className="flex items-center gap-1.5">
+                <span className="shrink-0 w-16 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                  {group.label}
+                </span>
+                <div className="flex flex-wrap gap-1">
+                  {group.symbols.map((sym) => (
+                    <button
+                      key={sym.latex}
+                      onClick={() => insertSymbol(sym.unicode)}
+                      disabled={isLoading}
+                      title={sym.latex}
+                      className="flex h-7 min-w-7 items-center justify-center rounded-md border border-zinc-700/40 bg-zinc-800/60 px-1.5 text-sm text-zinc-300 transition-all hover:border-indigo-500/40 hover:bg-indigo-500/10 hover:text-indigo-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      {sym.display}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-[10px] text-zinc-600 leading-relaxed">
+            Tip: type LaTeX shortcuts like{" "}
+            <code className="text-zinc-500">\forall</code>{" "}
+            <code className="text-zinc-500">\alpha</code>{" "}
+            <code className="text-zinc-500">\leq</code> followed by a space to
+            auto-convert.
+          </p>
+        </div>
+      )}
+
       <textarea
+        ref={textareaRef}
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={handleChange}
         placeholder="Paste your rough proof sketch here…"
-        className="flex-1 min-h-[260px] w-full resize-none rounded-xl border border-zinc-700/60 bg-zinc-800/50 p-4 text-sm leading-relaxed text-zinc-200 placeholder-zinc-500 outline-none transition-all focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20"
+        className="min-h-[200px] w-full resize-none rounded-xl border border-zinc-700/60 bg-zinc-800/50 p-4 text-sm leading-relaxed text-zinc-200 placeholder-zinc-500 outline-none transition-all focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20"
         disabled={isLoading}
       />
+
+      {showPreview && (
+        <div className="mt-2 rounded-xl border border-zinc-700/50 bg-zinc-800/30 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              LaTeX Preview
+            </span>
+          </div>
+          {text.trim() ? (
+            latexDetected ? (
+              <MathText className="text-sm leading-relaxed text-zinc-200">
+                {text}
+              </MathText>
+            ) : (
+              <div>
+                <p className="mb-2 text-xs text-amber-400/80">
+                  No LaTeX expressions detected. Wrap math in{" "}
+                  <code className="rounded bg-zinc-800 px-1 py-0.5 text-amber-300">
+                    $...$
+                  </code>{" "}
+                  to see rendered output.
+                </p>
+                <MathText className="text-sm leading-relaxed text-zinc-400">
+                  {text}
+                </MathText>
+              </div>
+            )
+          ) : (
+            <p className="text-xs text-zinc-600 italic">
+              Start typing to see a preview.
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="mt-3 flex items-center gap-3">
         <button
@@ -84,10 +199,10 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                 />
               </svg>
-              Polishing…
+              Forging…
             </span>
           ) : (
-            "Polish Proof"
+            "Forge Proof"
           )}
         </button>
         <button
