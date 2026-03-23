@@ -60,14 +60,14 @@ export default function ProofOutput({
   if (isLoading || (stage !== "idle" && stage !== "done")) {
     const label = STAGE_LABELS[stage] || STAGE_LABELS.classifying;
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 rounded-xl border border-zinc-700/40 bg-zinc-800/20 p-8">
+      <div className="flex h-full flex-col items-center justify-center gap-4 rounded-xl border border-zinc-200 bg-zinc-100 p-8 dark:border-zinc-700/40 dark:bg-zinc-800/20">
         <div className="relative h-12 w-12">
-          <div className="absolute inset-0 rounded-full border-2 border-zinc-700" />
-          <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-indigo-500" />
+          <div className="absolute inset-0 rounded-full border-2 border-zinc-300 dark:border-zinc-700" />
+          <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-indigo-400 dark:border-t-indigo-500" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium text-zinc-300">{label.title}</p>
-          <p className="mt-1 text-xs text-zinc-500">{label.sub}</p>
+          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{label.title}</p>
+          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">{label.sub}</p>
         </div>
         <div className="flex items-center gap-2 mt-2">
           {(["classifying", "polishing", "verifying", "suggesting"] as const).map(
@@ -76,11 +76,11 @@ export default function ProofOutput({
                 key={s}
                 className={`h-1.5 w-8 rounded-full transition-all ${
                   s === stage
-                    ? "bg-indigo-500"
+                    ? "bg-indigo-400 dark:bg-indigo-500"
                     : (["classifying", "polishing", "verifying", "suggesting"].indexOf(s) <
                       ["classifying", "polishing", "verifying", "suggesting"].indexOf(stage))
-                      ? "bg-indigo-500/40"
-                      : "bg-zinc-700"
+                      ? "bg-indigo-300/70 dark:bg-indigo-500/40"
+                      : "bg-zinc-200 dark:bg-zinc-700"
                 }`}
               />
             )
@@ -92,10 +92,10 @@ export default function ProofOutput({
 
   if (!result) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-zinc-700/60 p-8 text-center">
-        <div className="rounded-full bg-zinc-800 p-3">
+      <div className="flex h-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700/60">
+        <div className="rounded-full bg-zinc-100 p-3 dark:bg-zinc-800">
           <svg
-            className="h-6 w-6 text-zinc-500"
+            className="h-6 w-6 text-zinc-400 dark:text-zinc-500"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
@@ -108,10 +108,10 @@ export default function ProofOutput({
             />
           </svg>
         </div>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Your forged proof will appear here
         </p>
-        <p className="text-xs text-zinc-600">
+        <p className="text-xs text-zinc-500 dark:text-zinc-600">
           Paste an informal proof sketch and click &quot;Forge Proof&quot;
         </p>
       </div>
@@ -136,25 +136,25 @@ export default function ProofOutput({
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-zinc-700/50 pb-3 mb-4">
+      <div className="flex items-center gap-1 border-b border-zinc-200 pb-3 mb-4 dark:border-zinc-700/50">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`relative rounded-lg px-3.5 py-1.5 text-sm font-medium transition-all ${
               activeTab === tab.id
-                ? "bg-zinc-700/50 text-zinc-100"
-                : "text-zinc-500 hover:text-zinc-300"
+                ? "bg-zinc-200/80 text-zinc-900 dark:bg-zinc-700/50 dark:text-zinc-100"
+                : "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
             }`}
           >
             {tab.label}
             {tab.id === "steps" && warningCount > 0 && (
-              <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500/20 px-1 text-[10px] font-bold text-amber-400">
+              <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-100 px-1 text-[10px] font-bold text-amber-700 dark:bg-amber-500/20 dark:text-amber-400">
                 {warningCount}
               </span>
             )}
             {tab.id === "verification" && vulnCount > 0 && (
-              <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500/20 px-1 text-[10px] font-bold text-red-400">
+              <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-100 px-1 text-[10px] font-bold text-red-700 dark:bg-red-500/20 dark:text-red-400">
                 {vulnCount}
               </span>
             )}
@@ -165,17 +165,17 @@ export default function ProofOutput({
       {/* Tab content */}
       <div className="flex-1 overflow-auto">
         {activeTab === "proof" && (
-          <div className="rounded-xl border border-zinc-700/40 bg-zinc-800/30 p-5">
+          <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-700/40 dark:bg-zinc-800/30">
             <div className="flex items-center justify-end mb-3">
-              <div className="flex items-center rounded-lg border border-zinc-700/50 p-0.5">
+              <div className="flex items-center rounded-lg border border-zinc-200 p-0.5 dark:border-zinc-700/50">
                 {(["rendered", "preview", "raw"] as const).map((mode) => (
                   <button
                     key={mode}
                     onClick={() => setViewMode(mode)}
                     className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
                       viewMode === mode
-                        ? "bg-zinc-700/60 text-zinc-100"
-                        : "text-zinc-500 hover:text-zinc-300"
+                        ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-700/60 dark:text-zinc-100"
+                        : "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
                     }`}
                   >
                     {mode === "rendered"
@@ -188,27 +188,27 @@ export default function ProofOutput({
               </div>
             </div>
             {viewMode === "rendered" && (
-              <MathText className="text-sm leading-relaxed text-zinc-200 proof-text">
+              <MathText className="text-sm leading-relaxed text-zinc-800 dark:text-zinc-200 proof-text">
                 {result.polishedProof}
               </MathText>
             )}
             {viewMode === "preview" && (
-              <div className="rounded-xl border border-zinc-700/50 bg-zinc-800/30 p-4">
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700/50 dark:bg-zinc-800/30">
                 <div className="mb-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                     LaTeX Preview
                   </span>
                 </div>
                 {hasLatexContent(result.polishedProof) ? (
-                  <MathText className="text-sm leading-relaxed text-zinc-300">
+                  <MathText className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
                     {result.polishedProof}
                   </MathText>
                 ) : (
                   <div>
-                    <p className="mb-2 text-xs text-amber-400/80">
+                    <p className="mb-2 text-xs text-amber-700/90 dark:text-amber-400/80">
                       No LaTeX expressions detected in the polished proof.
                     </p>
-                    <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-400">
+                    <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
                       {result.polishedProof}
                     </div>
                   </div>
@@ -216,7 +216,7 @@ export default function ProofOutput({
               </div>
             )}
             {viewMode === "raw" && (
-              <pre className="whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-300 font-mono">
+              <pre className="whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-700 font-mono dark:text-zinc-300">
                 {result.polishedProof}
               </pre>
             )}
@@ -235,7 +235,7 @@ export default function ProofOutput({
           <div className="flex flex-col gap-4">
             {vulnCount > 0 ? (
               <>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                   Vulnerabilities Found ({vulnCount})
                 </h3>
                 {result.verification.vulnerabilities.map((v, i) => (
@@ -243,8 +243,8 @@ export default function ProofOutput({
                 ))}
               </>
             ) : (
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-5 text-center">
-                <p className="text-sm text-emerald-300">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-center dark:border-emerald-500/20 dark:bg-emerald-500/5">
+                <p className="text-sm text-emerald-700 dark:text-emerald-300">
                   No vulnerabilities found. The proof holds up under scrutiny.
                 </p>
               </div>
@@ -253,7 +253,7 @@ export default function ProofOutput({
             {/* Suggestions when verification failed */}
             {result.suggestions && result.suggestions.length > 0 && (
               <div className="mt-2">
-                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                   Alternative Approaches
                 </h3>
                 <div className="grid gap-3 sm:grid-cols-1">
@@ -273,24 +273,24 @@ export default function ProofOutput({
 
         {activeTab === "structure" && (
           <div className="flex flex-col gap-4">
-            <div className="rounded-xl border border-zinc-700/40 bg-zinc-800/30 p-4">
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700/40 dark:bg-zinc-800/30">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                 Assumptions
               </h3>
               <ul className="space-y-1.5">
                 {result.assumptions.map((a, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500/60" />
-                    <MathText className="text-zinc-300">{a}</MathText>
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400 dark:bg-indigo-500/60" />
+                    <MathText className="text-zinc-700 dark:text-zinc-300">{a}</MathText>
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="rounded-xl border border-zinc-700/40 bg-zinc-800/30 p-4">
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700/40 dark:bg-zinc-800/30">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                 Conclusion
               </h3>
-              <MathText className="text-sm text-zinc-300">
+              <MathText className="text-sm text-zinc-700 dark:text-zinc-300">
                 {result.conclusion}
               </MathText>
             </div>

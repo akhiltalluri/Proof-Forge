@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../data/proof-forge.db"
+}
+
+model ArchivedProof {
+  id               String   @id @default(cuid())
+  informalProof    String
+  polishedProof    String
+  proofType        String
+  score            Int
+  passed           Boolean
+  stepsJson        String
+  assumptionsJson  String
+  conclusion       String
+  verificationJson String
+  suggestionsJson  String?
+  createdAt        DateTime @default(now())
+}
+
+model UserSettings {
+  id                   String   @id @default("default")
+  archiveRetentionDays Int      @default(30)
+  updatedAt            DateTime @updatedAt
+}
