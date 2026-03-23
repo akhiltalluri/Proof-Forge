@@ -50,6 +50,7 @@ export default function ProofOutput({
   isLoading,
 }: ProofOutputProps) {
   const [activeTab, setActiveTab] = useState<Tab>("proof");
+  const [showRaw, setShowRaw] = useState(false);
 
   const warningCount =
     result?.steps.filter((s) => s.hasWarning).length ?? 0;
@@ -125,14 +126,12 @@ export default function ProofOutput({
 
   return (
     <div className="flex h-full flex-col">
-      {/* Proof type + verification badge */}
-      <div className="mb-4 flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <span className="rounded-full bg-violet-500/15 px-3 py-0.5 text-xs font-semibold text-violet-300 border border-violet-500/25">
-            {PROOF_TYPE_LABELS[result.proofType]}
-          </span>
-        </div>
-        <VerificationBadge verification={result.verification} />
+      {/* Verification badge with inline proof type */}
+      <div className="mb-4">
+        <VerificationBadge
+          verification={result.verification}
+          proofTypeLabel={PROOF_TYPE_LABELS[result.proofType]}
+        />
       </div>
 
       {/* Tabs */}
@@ -166,9 +165,39 @@ export default function ProofOutput({
       <div className="flex-1 overflow-auto">
         {activeTab === "proof" && (
           <div className="rounded-xl border border-zinc-700/40 bg-zinc-800/30 p-5">
-            <MathText className="text-sm leading-relaxed text-zinc-200 proof-text">
-              {result.polishedProof}
-            </MathText>
+            <div className="flex items-center justify-end mb-3">
+              <div className="flex items-center rounded-lg border border-zinc-700/50 p-0.5">
+                <button
+                  onClick={() => setShowRaw(false)}
+                  className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
+                    !showRaw
+                      ? "bg-zinc-700/60 text-zinc-100"
+                      : "text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  Rendered
+                </button>
+                <button
+                  onClick={() => setShowRaw(true)}
+                  className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
+                    showRaw
+                      ? "bg-zinc-700/60 text-zinc-100"
+                      : "text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  Raw
+                </button>
+              </div>
+            </div>
+            {showRaw ? (
+              <pre className="whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-300 font-mono">
+                {result.polishedProof}
+              </pre>
+            ) : (
+              <MathText className="text-sm leading-relaxed text-zinc-200 proof-text">
+                {result.polishedProof}
+              </MathText>
+            )}
           </div>
         )}
 

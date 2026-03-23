@@ -94,3 +94,53 @@ export function replaceLatexShortcuts(text: string): string {
       : match;
   });
 }
+
+export const UNICODE_TO_LATEX: Record<string, string> =
+  SYMBOL_GROUPS.flatMap((g) => g.symbols).reduce(
+    (map, s) => {
+      map[s.unicode] = s.latex;
+      return map;
+    },
+    {} as Record<string, string>
+  );
+
+const UNICODE_PATTERN = new RegExp(
+  Object.keys(UNICODE_TO_LATEX)
+    .sort((a, b) => b.length - a.length)
+    .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("|"),
+  "g"
+);
+
+/**
+ * Convert informal proof text with Unicode math symbols into LaTeX-wrapped
+ * notation. Splits on sentence boundaries and wraps segments that contain
+ * math-like tokens in $...$ delimiters.
+ */
+export function convertToLatex(text: string): string {
+  const lines = text.split("\n");
+  return lines
+    .map((line) => {
+      const segments = line.split(/(?<=[.!?])\s+/);
+      return segments
+        .map((seg) => {
+          const hasMath =
+            UNICODE_PATTERN.test(seg) ||
+            /[_^{}]|[a-zA-Z]_\{/.test(seg) ||
+            /\b[a-z]_[a-z0-9]/i.test(seg);
+          UNICODE_PATTERN.lastIndex = 0;
+
+          if (!hasMath) return seg;
+
+          const converted = seg.replace(UNICODE_PATTERN, (m) => UNICODE_TO_LATEX[m] ?? m);
+          if (converted.includes("$")) return converted;
+          return `$${converted}$`;
+        })
+        .join(" ");
+    })
+    .join("\n");
+}
+
+export function hasLatexContent(text: string): boolean {
+  return /\$[^$]+\$/.test(text) || /\\\(.*?\\\)/.test(text) || /\\\[[\s\S]*?\\]/.test(text);
+}

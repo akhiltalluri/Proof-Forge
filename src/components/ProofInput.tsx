@@ -2,7 +2,13 @@
 
 import { useRef, useState, useCallback } from "react";
 import { getRandomExample } from "@/lib/examples";
-import { SYMBOL_GROUPS, replaceLatexShortcuts } from "@/lib/symbols";
+import {
+  SYMBOL_GROUPS,
+  replaceLatexShortcuts,
+  convertToLatex,
+  hasLatexContent,
+} from "@/lib/symbols";
+import MathText from "./MathText";
 
 interface ProofInputProps {
   onSubmit: (proof: string) => void;
@@ -12,6 +18,7 @@ interface ProofInputProps {
 export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
   const [text, setText] = useState("");
   const [showToolbar, setShowToolbar] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
   const lastExampleIdx = useRef<number | undefined>(undefined);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -27,48 +34,80 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
     setText(example);
   };
 
-  const insertSymbol = useCallback((symbol: string) => {
-    const ta = textareaRef.current;
-    if (!ta) {
-      setText((prev) => prev + symbol);
-      return;
-    }
+  const insertSymbol = useCallback(
+    (symbol: string) => {
+      const ta = textareaRef.current;
+      if (!ta) {
+        setText((prev) => prev + symbol);
+        return;
+      }
 
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const before = text.slice(0, start);
-    const after = text.slice(end);
-    const newText = before + symbol + after;
-    setText(newText);
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      const before = text.slice(0, start);
+      const after = text.slice(end);
+      const newText = before + symbol + after;
+      setText(newText);
 
-    requestAnimationFrame(() => {
-      ta.focus();
-      const cursor = start + symbol.length;
-      ta.setSelectionRange(cursor, cursor);
-    });
-  }, [text]);
+      requestAnimationFrame(() => {
+        ta.focus();
+        const cursor = start + symbol.length;
+        ta.setSelectionRange(cursor, cursor);
+      });
+    },
+    [text]
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(replaceLatexShortcuts(e.target.value));
   };
 
+  const handleConvertToLatex = () => {
+    if (text.trim()) {
+      setText(convertToLatex(text));
+      setShowPreview(true);
+    }
+  };
+
+  const latexDetected = hasLatexContent(text);
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold text-zinc-100">
           Informal Proof Sketch
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={handleConvertToLatex}
+            disabled={isLoading || !text.trim()}
+            className="rounded-lg border border-zinc-700 px-2.5 py-1 text-[11px] text-zinc-400 transition-all hover:border-indigo-500/50 hover:text-indigo-300 disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Convert Unicode math symbols to LaTeX notation"
+          >
+            Convert to LaTeX
+          </button>
+          <button
+            onClick={() => setShowPreview((v) => !v)}
+            className={`rounded-lg border px-2.5 py-1 text-[11px] transition-all ${
+              showPreview
+                ? "border-indigo-500/40 bg-indigo-500/10 text-indigo-300"
+                : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+            }`}
+            title={showPreview ? "Hide LaTeX preview" : "Show LaTeX preview"}
+          >
+            {showPreview ? "Hide Preview" : "Preview LaTeX"}
+          </button>
           <button
             onClick={() => setShowToolbar((v) => !v)}
-            className="rounded-lg border border-zinc-700 px-2.5 py-1 text-[11px] text-zinc-400 transition-all hover:border-zinc-500 hover:text-zinc-200"
+            className={`rounded-lg border px-2.5 py-1 text-[11px] transition-all ${
+              showToolbar
+                ? "border-indigo-500/40 bg-indigo-500/10 text-indigo-300"
+                : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+            }`}
             title={showToolbar ? "Hide symbol toolbar" : "Show symbol toolbar"}
           >
             {showToolbar ? "Hide Symbols" : "Show Symbols"}
           </button>
-          <span className="rounded-full bg-indigo-500/20 px-3 py-0.5 text-xs font-medium text-indigo-300 border border-indigo-500/30">
-            Real Analysis
-          </span>
         </div>
       </div>
 
@@ -97,7 +136,8 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
             ))}
           </div>
           <p className="mt-2 text-[10px] text-zinc-600 leading-relaxed">
-            Tip: type LaTeX shortcuts like <code className="text-zinc-500">\forall</code>{" "}
+            Tip: type LaTeX shortcuts like{" "}
+            <code className="text-zinc-500">\forall</code>{" "}
             <code className="text-zinc-500">\alpha</code>{" "}
             <code className="text-zinc-500">\leq</code> followed by a space to
             auto-convert.
@@ -110,9 +150,43 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
         value={text}
         onChange={handleChange}
         placeholder="Paste your rough proof sketch here…"
-        className="flex-1 min-h-[220px] w-full resize-none rounded-xl border border-zinc-700/60 bg-zinc-800/50 p-4 text-sm leading-relaxed text-zinc-200 placeholder-zinc-500 outline-none transition-all focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20"
+        className="min-h-[200px] w-full resize-none rounded-xl border border-zinc-700/60 bg-zinc-800/50 p-4 text-sm leading-relaxed text-zinc-200 placeholder-zinc-500 outline-none transition-all focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20"
         disabled={isLoading}
       />
+
+      {showPreview && (
+        <div className="mt-2 rounded-xl border border-zinc-700/50 bg-zinc-800/30 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              LaTeX Preview
+            </span>
+          </div>
+          {text.trim() ? (
+            latexDetected ? (
+              <MathText className="text-sm leading-relaxed text-zinc-200">
+                {text}
+              </MathText>
+            ) : (
+              <div>
+                <p className="mb-2 text-xs text-amber-400/80">
+                  No LaTeX expressions detected. Wrap math in{" "}
+                  <code className="rounded bg-zinc-800 px-1 py-0.5 text-amber-300">
+                    $...$
+                  </code>{" "}
+                  to preview, or click &quot;Convert to LaTeX&quot; above.
+                </p>
+                <MathText className="text-sm leading-relaxed text-zinc-400">
+                  {text}
+                </MathText>
+              </div>
+            )
+          ) : (
+            <p className="text-xs text-zinc-600 italic">
+              Start typing to see a preview.
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="mt-3 flex items-center gap-3">
         <button

@@ -186,7 +186,7 @@ export default function Home() {
             </div>
           )}
 
-          <div className="grid gap-8 lg:grid-cols-2">
+          <div className="grid items-start gap-8 lg:grid-cols-2">
             <ProofInput onSubmit={handleSubmit} isLoading={isLoading} />
             <ProofOutput
               result={result}
