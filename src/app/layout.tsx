@@ -4,9 +4,9 @@ import NavBar from "@/components/NavBar";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "Proof Forge — Proof-writing assistant",
+  title: "Proof Forge — Polish Your Proofs",
   description:
-    "Personal project: turn rough mathematical proof sketches into clearer, structured arguments — with steps, heuristic verification, and archive history.",
+    "A personal tool that turns rough math proof sketches into structured, rigorous proofs with step-by-step reasoning and justification checks.",
 };
 
 export default function RootLayout({

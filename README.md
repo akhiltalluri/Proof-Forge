@@ -1,157 +1,134 @@
 # Proof Forge
 
-A personal project for turning **rough mathematical proof sketches** into **clearer, more structured proofs** — across analysis, algebra, discrete math, combinatorics, number theory, topology, and set theory — not just a single course.
+A personal project for polishing rough real-analysis proofs. Paste an informal sketch, get back a structured proof with numbered steps and flagged gaps.
 
-It rewrites your sketch into numbered steps, surfaces weak justifications, and runs a **heuristic** verification pass (score + gap notes). It is **not** formal verification and **does not** guarantee correctness.
+## What it does
 
-## Why I built this
+You write something like:
 
-I often had the right mathematical idea but not the cleanest written presentation. I wanted something that could help organize an argument into explicit steps, flag vague jumps (“clearly”, “obviously”, missing cases), and suggest alternative proof shapes when the draft felt shaky — more like a writing and structure assistant than a theorem prover.
+> "Let $a_n \to L$. Since convergent sequences are bounded, $a_n$ is bounded. Therefore there exists $M$ such that $|a_n| \leq M$ for all $n$."
 
-## Limitations (read this)
+Proof Forge rewrites it into clean, step-by-step mathematical prose, flags anything hand-wavy ("clearly", "it follows", etc.), and pulls out the assumptions and conclusion so you can see the skeleton of your argument.
 
-- **Does not guarantee mathematical correctness** — the model can miss subtle errors or approve flawed sketches.
-- **Not a substitute** for formal proof assistants (Lean, Coq, Isabelle, etc.).
-- **Best used for** structure, clarity, revision prompts, and practice — always check the mathematics yourself.
-- **Verification scores** are LLM judgments, not proofs; quality depends on context and how much detail you provide.
-- **Demo mode** uses fixed sample outputs only; it does not validate your own mathematics.
-
-## Architecture
-
-| Layer | Technology |
-|--------|------------|
-| Frontend | Next.js (App Router), React 19, TypeScript, Tailwind CSS 4 |
-| Backend | Next.js API routes (same repo) |
-| LLM pipeline | classify + polish → verify → suggest (when verification fails) |
-| Persistence | SQLite via Prisma (`ArchivedProof`, `UserSettings`) |
-| Math rendering | KaTeX, `react-markdown`, remark-math |
-
-```mermaid
-flowchart LR
-  subgraph client [Browser]
-    Forge[Forge page]
-    Archive[Archive]
-    Library[Library]
-  end
-  subgraph api [API routes]
-    ForgeAPI["/api/forge"]
-    ArchiveAPI["/api/archive"]
-    SettingsAPI["/api/settings"]
-    ConfigAPI["/api/config"]
-  end
-  Forge --> ForgeAPI
-  Forge --> ArchiveAPI
-  Archive --> ArchiveAPI
-  ForgeAPI -->|"DEMO_MODE"| DemoFixtures[Canned fixtures]
-  ForgeAPI -->|"else"| OpenAI[OpenAI API]
-```
+This is **structural assistance**, not formal verification — no Lean, no Coq, no correctness guarantees. I built this because I wanted a faster way to clean up my own proof drafts.
 
 ## Features
 
-- Multi-stage pipeline: proof-type classification, polished write-up, adversarial-style review, optional alternative strategies
-- **Demo mode** (`DEMO_MODE=true`): “Run Demo” with canned examples (direct, contradiction, induction, ε–δ, combinatorial, set identity) — **no API key or credits**
-- **Library**: curated axioms / definitions / theorems (static data), browsable by branch and type
-- **Archive**: history of forged proofs with search, filters by domain and proof type, re-forge, duplicate-and-edit
-- **Settings**: theme (light / system / dark), archive retention, API key
-- **Examples** with topic, proof type, domain, difficulty, and common pitfall
-- **Templates** for common proof outlines (direct, contradiction, induction, ε–δ, cases, …)
-- Export polished output as **Markdown** or copy raw polished text
-- LaTeX helpers and preview
+- Rewrites informal sketches into formal mathematical English
+- Extracts numbered proof steps with explicit justifications
+- Flags vague or unsupported claims that need citations
+- Shows proof structure (assumptions / conclusion) at a glance
+- Heuristic verification with a 0–100 score and suggested alternative strategies
+- 38 built-in example proofs across several difficulty tiers
+- LaTeX math input helpers, preview, and KaTeX rendering
 
 ## Prerequisites
 
+Before you start, install or confirm the following on your machine.
+
 ### 1. Git
 
-- **macOS:** Xcode Command Line Tools or [git-scm.com](https://git-scm.com/)
-- **Windows:** [Git for Windows](https://git-scm.com/download/win)
-- **Linux:** e.g. `sudo apt install git`
+Used to clone the repository.
+
+- **macOS:** Install [Xcode Command Line Tools](https://developer.apple.com/xcode/resources/) (`xcode-select --install`) or install Git from [git-scm.com](https://git-scm.com/).
+- **Windows:** Install [Git for Windows](https://git-scm.com/download/win).
+- **Linux:** e.g. `sudo apt install git` (Debian/Ubuntu) or use your distro’s package manager.
 
 Check: `git --version`
 
-### 2. Node.js 18+ (LTS 20 or 22 recommended)
+### 2. Node.js and npm
 
-- [nodejs.org](https://nodejs.org/) or **nvm** / **fnm** / **Volta**
+The app runs on **Node.js 18 or newer** (LTS 20 or 22 is recommended). `npm` ships with Node.
+
+- **All platforms:** Download the LTS installer from [nodejs.org](https://nodejs.org/), or use a version manager:
+  - **nvm** (macOS/Linux): [github.com/nvm-sh/nvm](https://github.com/nvm-sh/nvm) — then `nvm install --lts`
+  - **fnm** / **Volta:** similar workflow; pick one tool and follow its docs.
 
 Check:
 
 ```bash
-node -v
+node -v   # should show v18.x.x or higher
 npm -v
 ```
 
-### 3. OpenAI API key (for live forging)
+### 3. OpenAI API key
 
-- Create a key at [platform.openai.com](https://platform.openai.com/)  
-- **Not required** if you only use **demo mode** (see below)
+Proof Forge calls the OpenAI API (model: **gpt-4o-mini**). You need an account and a secret key.
 
-Billing follows OpenAI’s pricing for **gpt-4o-mini**.
+1. Go to [platform.openai.com](https://platform.openai.com/) and sign in or create an account.
+2. Open **API keys** and create a new key.
+3. Store it somewhere safe — you will paste it into the app or into a local env file (see below).
+
+Billing: API usage may incur charges on your OpenAI account according to their pricing.
 
 ---
 
-## Setup (step by step)
+## Project setup (step by step)
 
-### Step 1 — Clone the repo
+### Step 1 — Clone the repository
 
 ```bash
 git clone https://github.com/akhiltalluri/Proof-Forge.git
 cd Proof-Forge
 ```
 
+You should now be in the `Proof-Forge` directory.
+
 ### Step 2 — Install dependencies
+
+Install JavaScript packages listed in `package.json`:
 
 ```bash
 npm install
 ```
 
-`postinstall` runs `prisma generate` so the Prisma client is ready.
+This may take a minute. If `npm install` fails, try again on a stable network; avoid interrupting the download.
 
-### Step 3 — Environment file
+### Step 3 — (Optional) Configure the API key via environment file
 
-```bash
-cp .env.example .env.local
-```
+You can skip this step if you prefer to enter the key only in the browser (see Step 5).
 
-Edit `.env.local`:
+1. Copy the example env file:
 
-- **`OPENAI_API_KEY`** — optional if you paste the key only in the app Settings UI
-- **`DEMO_MODE=true`** — enables server-side demo responses and the **Run Demo** control on Forge (no OpenAI calls for demos)
+   ```bash
+   cp .env.example .env.local
+   ```
 
-Never commit `.env.local`.
+2. Open `.env.local` in an editor and set your key:
 
-### Step 4 — Database (SQLite)
+   ```env
+   OPENAI_API_KEY=sk-your-actual-key-here
+   ```
 
-The schema lives in `prisma/schema.prisma`; the DB file is created under `data/` (gitignored) when you migrate:
+3. **Do not commit `.env.local`.** It is gitignored by default in Next.js projects.
 
-```bash
-npx prisma migrate dev
-```
+The server can read `OPENAI_API_KEY` from the environment when handling API routes (if your deployment wires it the same way).
 
-(If you already have migrations applied, this may report “already in sync”.)
-
-### Step 5 — Run the dev server
+### Step 4 — Run the development server
 
 ```bash
 npm run dev
 ```
 
-Open **http://localhost:3000** (or the port shown in the terminal). The home route redirects to **`/forge`**.
+Wait until the terminal shows something like **Ready** and a local URL (by default port **3000**).
 
-### Step 6 — API key (if not using `.env.local`)
+### Step 5 — Open the app and set the API key (if needed)
 
-1. Open **Settings** in the nav, or use the Forge hint to set the key.  
-2. The key is stored in **localStorage** in your browser and sent to **your** Next.js server only when you forge (not logged by the app by design).
+1. In a browser, open **http://localhost:3000**
+2. If you did **not** use `.env.local`, click **Set API Key** (top-right), paste your OpenAI key, and save. The key is stored in your browser’s **local storage** for this site only.
 
-### Step 7 — Try demo mode (optional)
+You can now paste a proof sketch and use **Forge Proof**, or try **Load Example**.
 
-1. Set `DEMO_MODE=true` in `.env.local` and restart `npm run dev`.  
-2. On **Forge**, use the **Run Demo** dropdown — no OpenAI usage.
+### Step 6 — Production build (optional)
 
-### Step 8 — Production build (optional)
+To verify a production build locally:
 
 ```bash
 npm run build
 npm run start
 ```
+
+Then open **http://localhost:3000** again (default port for `next start` is also 3000 unless you set `PORT`).
 
 ---
 
@@ -159,13 +136,23 @@ npm run start
 
 | Issue | What to try |
 |--------|-------------|
-| Errors loading pages / missing `.next` chunks | Stop dev server, delete `.next` and `node_modules/.cache`, run `npm run dev` again |
-| Port 3000 in use | `npx next dev -p 3001` or free the port |
-| OpenAI quota / rate limit | Check billing and limits on the OpenAI dashboard |
-| Prisma / DB errors | Run `npx prisma migrate dev` from project root |
+| **Internal Server Error** or **Cannot find module** under `.next` | Stop the dev server, delete `.next` and `node_modules/.cache`, then run `npm run dev` again. |
+| **Port 3000 in use** | Run `npx next dev -p 3001` or stop the other process using port 3000. |
+| **API / quota errors** | Check your OpenAI key, billing, and rate limits on the OpenAI dashboard. |
 
 ---
 
+## How it works
+
+1. Paste an informal proof sketch (scoped to real analysis).
+2. The server sends it to GPT-4o-mini with prompts for classification, polishing, verification, and (when needed) alternative strategies.
+3. The model returns structured JSON — polished proof, steps, assumptions, conclusion, verification score, and any warnings.
+4. The frontend renders math with KaTeX, tabbed views, and verification details.
+
+## Domain
+
+Currently focused on **real analysis**: sequences, limits, continuity, differentiation, integration, series, metric spaces.
+
 ## Built with
 
-Next.js 15 · React 19 · TypeScript · Tailwind CSS 4 · Prisma · SQLite · OpenAI API · KaTeX
+Next.js 15 · Tailwind CSS 4 · OpenAI API · KaTeX · TypeScript

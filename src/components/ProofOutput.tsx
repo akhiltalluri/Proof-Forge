@@ -6,10 +6,8 @@ import {
   ProofSuggestion,
   PipelineStage,
   PROOF_TYPE_LABELS,
-  MATH_DOMAIN_LABELS,
 } from "@/types/proof";
 import { hasLatexContent } from "@/lib/symbols";
-import { proofToMarkdown, copyToClipboard } from "@/lib/export-proof";
 import MathText from "./MathText";
 import StepCard from "./StepCard";
 import VerificationBadge from "./VerificationBadge";
@@ -23,28 +21,25 @@ interface ProofOutputProps {
   stage: PipelineStage;
   onRetryWithSuggestion: (suggestion: ProofSuggestion) => void;
   isLoading: boolean;
-  /** Canned demo response (no API) */
-  isDemo?: boolean;
-  onNotify?: (message: string) => void;
 }
 
 const STAGE_LABELS: Record<PipelineStage, { title: string; sub: string }> = {
   idle: { title: "", sub: "" },
   classifying: {
-    title: "Classifying proof…",
-    sub: "Detecting structure and proof technique",
+    title: "Classifying proof type…",
+    sub: "Detecting the proof technique",
   },
   polishing: {
-    title: "Polishing argument…",
-    sub: "Rewriting into clearer, structured steps",
+    title: "Polishing your proof…",
+    sub: "Rewriting into formal structure",
   },
   verifying: {
-    title: "Checking for gaps…",
-    sub: "Stress-testing logic and justifications",
+    title: "Verifying the proof…",
+    sub: "Stress-testing for logical gaps",
   },
   suggesting: {
-    title: "Generating suggestions…",
-    sub: "Alternative proof approaches you could try",
+    title: "Generating alternatives…",
+    sub: "Finding better proof strategies",
   },
   done: { title: "", sub: "" },
 };
@@ -54,8 +49,6 @@ export default function ProofOutput({
   stage,
   onRetryWithSuggestion,
   isLoading,
-  isDemo,
-  onNotify,
 }: ProofOutputProps) {
   const [activeTab, setActiveTab] = useState<Tab>("proof");
   const [viewMode, setViewMode] = useState<"rendered" | "preview" | "raw">("rendered");
@@ -99,7 +92,7 @@ export default function ProofOutput({
 
   if (!result) {
     return (
-      <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700/60">
+      <div className="flex h-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700/60">
         <div className="rounded-full bg-zinc-100 p-3 dark:bg-zinc-800">
           <svg
             className="h-6 w-6 text-zinc-400 dark:text-zinc-500"
@@ -115,29 +108,15 @@ export default function ProofOutput({
             />
           </svg>
         </div>
-        <p className="max-w-sm text-sm font-medium text-zinc-600 dark:text-zinc-300">
-          Output panel — polished proof, steps, and verification show up here
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Your forged proof will appear here
         </p>
-        <p className="max-w-xs text-xs text-zinc-500 dark:text-zinc-500">
-          Paste a sketch on the left, use <strong>Load Example</strong> or <strong>Run Demo</strong> (when enabled), then <strong>Forge Proof</strong>.
+        <p className="text-xs text-zinc-500 dark:text-zinc-600">
+          Paste an informal proof sketch and click &quot;Forge Proof&quot;
         </p>
       </div>
     );
   }
-
-  const domainLabel = result.mathDomain
-    ? MATH_DOMAIN_LABELS[result.mathDomain]
-    : undefined;
-
-  const handleCopyMd = async () => {
-    const ok = await copyToClipboard(proofToMarkdown(result));
-    onNotify?.(ok ? "Copied Markdown to clipboard" : "Could not copy");
-  };
-
-  const handleCopyLatex = async () => {
-    const ok = await copyToClipboard(result.polishedProof);
-    onNotify?.(ok ? "Copied polished proof (LaTeX/plain) to clipboard" : "Could not copy");
-  };
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "proof", label: "Polished Proof" },
@@ -148,17 +127,11 @@ export default function ProofOutput({
 
   return (
     <div className="flex h-full flex-col">
-      {isDemo && (
-        <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-center text-[11px] text-amber-800 dark:text-amber-200">
-          Demo mode: sample output only — no API usage. Set <code className="rounded bg-black/10 px-1 dark:bg-white/10">DEMO_MODE=true</code> and use Run Demo to explore.
-        </div>
-      )}
       {/* Verification badge with inline proof type */}
       <div className="mb-4">
         <VerificationBadge
           verification={result.verification}
           proofTypeLabel={PROOF_TYPE_LABELS[result.proofType]}
-          mathDomainLabel={domainLabel}
         />
       </div>
 
@@ -193,23 +166,7 @@ export default function ProofOutput({
       <div className="flex-1 overflow-auto">
         {activeTab === "proof" && (
           <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-700/40 dark:bg-zinc-800/30">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  type="button"
-                  onClick={handleCopyMd}
-                  className="rounded-lg border border-zinc-300 px-2.5 py-1 text-[11px] font-medium text-zinc-600 transition-all hover:border-zinc-400 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                >
-                  Copy Markdown
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCopyLatex}
-                  className="rounded-lg border border-zinc-300 px-2.5 py-1 text-[11px] font-medium text-zinc-600 transition-all hover:border-zinc-400 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                >
-                  Copy polished text
-                </button>
-              </div>
+            <div className="flex items-center justify-end mb-3">
               <div className="flex items-center rounded-lg border border-zinc-200 p-0.5 dark:border-zinc-700/50">
                 {(["rendered", "preview", "raw"] as const).map((mode) => (
                   <button

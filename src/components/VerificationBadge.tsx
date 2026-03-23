@@ -5,7 +5,6 @@ import { VerificationResult } from "@/types/proof";
 interface VerificationBadgeProps {
   verification: VerificationResult;
   proofTypeLabel?: string;
-  mathDomainLabel?: string;
 }
 
 function getScoreTier(score: number): { label: string; color: string; ring: string } {
@@ -20,7 +19,6 @@ function getScoreTier(score: number): { label: string; color: string; ring: stri
 export default function VerificationBadge({
   verification,
   proofTypeLabel,
-  mathDomainLabel,
 }: VerificationBadgeProps) {
   const { passed, score, summary } = verification;
   const tier = getScoreTier(score);
@@ -65,17 +63,8 @@ export default function VerificationBadge({
               {proofTypeLabel}
             </span>
           )}
-          {mathDomainLabel && (
-            <span className="rounded-full border border-sky-500/25 bg-sky-500/15 px-2.5 py-0.5 text-[10px] font-semibold text-sky-700 dark:text-sky-300">
-              {mathDomainLabel}
-            </span>
-          )}
         </div>
         <p className="mt-1 text-xs text-zinc-500 leading-relaxed dark:text-zinc-400">{summary}</p>
-        <p className="mt-2 text-[10px] leading-relaxed text-zinc-400 dark:text-zinc-500">
-          Scores are heuristic: an LLM reviews structure and likely gaps. They do not certify correctness.
-          Pass requires score ≥ 70 and no critical findings.
-        </p>
       </div>
     </div>
   );

@@ -9,8 +9,6 @@ datasource db {
 
 model ArchivedProof {
   id               String   @id @default(cuid())
-  title            String   @default("")
-  mathDomain       String   @default("")
   informalProof    String
   polishedProof    String
   proofType        String

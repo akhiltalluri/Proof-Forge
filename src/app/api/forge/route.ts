@@ -1,29 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { forgeProof } from "@/lib/openai";
-import { getDemoResult, isDemoFixtureId } from "@/lib/demo-fixtures";
-import type { DemoFixtureId } from "@/types/proof";
-import { normalizeProofType } from "@/lib/proof-type-guard";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { proof, apiKey, proofType, demo, demoFixture } = body as {
-      proof?: string;
-      apiKey?: string;
-      proofType?: string;
-      demo?: boolean;
-      demoFixture?: string;
-    };
-
-    const demoMode = process.env.DEMO_MODE === "true";
-
-    if (demoMode && demo === true) {
-      const id = (demoFixture && isDemoFixtureId(demoFixture)
-        ? demoFixture
-        : "direct") as DemoFixtureId;
-      const data = getDemoResult(id);
-      return NextResponse.json({ success: true, data, demo: true });
-    }
+    const { proof, apiKey, proofType } = await req.json();
 
     if (!proof || typeof proof !== "string" || proof.trim().length === 0) {
       return NextResponse.json(
@@ -44,11 +24,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await forgeProof(
-      proof.trim(),
-      key,
-      proofType ? normalizeProofType(proofType) : undefined
-    );
+    const result = await forgeProof(proof.trim(), key, proofType || undefined);
     return NextResponse.json({ success: true, data: result });
   } catch (err: unknown) {
     const message =
