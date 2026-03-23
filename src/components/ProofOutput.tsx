@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 import { ProofResult } from "@/types/proof";
+import {
+  proofToPlainText,
+  proofToMarkdown,
+  copyToClipboard,
+  downloadAsFile,
+} from "@/lib/export";
 import MathText from "./MathText";
 import StepCard from "./StepCard";
 
@@ -14,6 +20,21 @@ interface ProofOutputProps {
 
 export default function ProofOutput({ result, isLoading }: ProofOutputProps) {
   const [activeTab, setActiveTab] = useState<Tab>("proof");
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!result) return;
+    const ok = await copyToClipboard(proofToPlainText(result));
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleDownload = () => {
+    if (!result) return;
+    downloadAsFile(proofToMarkdown(result), "proof.md");
+  };
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "proof", label: "Polished Proof" },
@@ -73,25 +94,58 @@ export default function ProofOutput({ result, isLoading }: ProofOutputProps) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-1 border-b border-zinc-700/50 pb-3 mb-4">
-        {tabs.map((tab) => (
+      <div className="flex items-center justify-between border-b border-zinc-700/50 pb-3 mb-4">
+        <div className="flex items-center gap-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative rounded-lg px-3.5 py-1.5 text-sm font-medium transition-all ${
+                activeTab === tab.id
+                  ? "bg-zinc-700/50 text-zinc-100"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              {tab.label}
+              {tab.id === "steps" && warningCount > 0 && (
+                <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500/20 px-1 text-[10px] font-bold text-amber-400">
+                  {warningCount}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5">
           <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`relative rounded-lg px-3.5 py-1.5 text-sm font-medium transition-all ${
-              activeTab === tab.id
-                ? "bg-zinc-700/50 text-zinc-100"
-                : "text-zinc-500 hover:text-zinc-300"
-            }`}
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-400 transition-all hover:border-zinc-500 hover:text-zinc-200"
           >
-            {tab.label}
-            {tab.id === "steps" && warningCount > 0 && (
-              <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500/20 px-1 text-[10px] font-bold text-amber-400">
-                {warningCount}
-              </span>
+            {copied ? (
+              <>
+                <svg className="h-3.5 w-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+                <span className="text-emerald-400">Copied</span>
+              </>
+            ) : (
+              <>
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
+                </svg>
+                Copy
+              </>
             )}
           </button>
-        ))}
+          <button
+            onClick={handleDownload}
+            className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-400 transition-all hover:border-zinc-500 hover:text-zinc-200"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Download .md
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-auto">
