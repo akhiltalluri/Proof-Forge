@@ -30,11 +30,35 @@ export async function POST(req: NextRequest) {
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "An unexpected error occurred";
+    const status = (err as { status?: number })?.status;
 
     if (message.includes("Incorrect API key")) {
       return NextResponse.json(
         { success: false, error: "Invalid OpenAI API key." },
         { status: 401 }
+      );
+    }
+
+    if (status === 429 || message.includes("quota") || message.includes("rate limit")) {
+      const isQuota = message.toLowerCase().includes("quota");
+      return NextResponse.json(
+        {
+          success: false,
+          error: isQuota
+            ? "Your OpenAI API key has exceeded its quota. Check your billing and usage at https://platform.openai.com/settings/organization/billing"
+            : "Rate limited by OpenAI. Wait a moment and try again.",
+        },
+        { status: 429 }
+      );
+    }
+
+    if (status === 503 || message.toLowerCase().includes("overloaded")) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "OpenAI is temporarily overloaded. Try again in a few seconds.",
+        },
+        { status: 503 }
       );
     }
 
