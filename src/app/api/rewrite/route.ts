@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { rewriteProof } from "@/lib/openai";
+import { forgeProof } from "@/lib/openai";
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
 
     if (!proof || typeof proof !== "string" || proof.trim().length === 0) {
       return NextResponse.json(
-        { success: false, error: "Please provide a proof to rewrite." },
+        { success: false, error: "Please provide a proof." },
         { status: 400 }
       );
     }
@@ -24,53 +24,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await rewriteProof(proof.trim(), key);
-
+    const result = await forgeProof(proof.trim(), key);
     return NextResponse.json({ success: true, data: result });
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "An unexpected error occurred";
-    const status = (err as { status?: number })?.status;
-
-    if (message.includes("Incorrect API key")) {
-      return NextResponse.json(
-        { success: false, error: "Invalid OpenAI API key." },
-        { status: 401 }
-      );
-    }
-
-    if (status === 429 || message.includes("quota") || message.includes("rate limit")) {
-      const isQuota = message.toLowerCase().includes("quota");
-      return NextResponse.json(
-        {
-          success: false,
-          error: isQuota
-            ? "Your OpenAI API key has exceeded its quota. Check your billing and usage at https://platform.openai.com/settings/organization/billing"
-            : "Rate limited by OpenAI. Wait a moment and try again.",
-        },
-        { status: 429 }
-      );
-    }
-
-    if (status === 503 || message.toLowerCase().includes("overloaded")) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "OpenAI is temporarily overloaded. Try again in a few seconds.",
-        },
-        { status: 503 }
-      );
-    }
-
-    if (message.includes("JSON")) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Failed to parse the model response. Please try again.",
-        },
-        { status: 502 }
-      );
-    }
 
     return NextResponse.json(
       { success: false, error: message },
