@@ -5,7 +5,11 @@ export type ProofType =
   | "induction"
   | "construction"
   | "cases"
-  | "uniqueness";
+  | "uniqueness"
+  | "epsilon_delta"
+  | "algebraic"
+  | "combinatorial"
+  | "set_identity";
 
 export const PROOF_TYPE_LABELS: Record<ProofType, string> = {
   direct: "Direct Proof",
@@ -15,7 +19,43 @@ export const PROOF_TYPE_LABELS: Record<ProofType, string> = {
   construction: "Proof by Construction",
   cases: "Proof by Cases",
   uniqueness: "Uniqueness Proof",
+  epsilon_delta: "Epsilon-Delta Argument",
+  algebraic: "Algebraic Proof",
+  combinatorial: "Combinatorial Proof",
+  set_identity: "Set-Theoretic Proof",
 };
+
+export type MathDomain =
+  | "analysis"
+  | "algebra"
+  | "combinatorics"
+  | "discrete_math"
+  | "topology"
+  | "number_theory"
+  | "set_theory"
+  | "geometry"
+  | "general";
+
+export const MATH_DOMAIN_LABELS: Record<MathDomain, string> = {
+  analysis: "Analysis",
+  algebra: "Algebra",
+  combinatorics: "Combinatorics",
+  discrete_math: "Discrete Math",
+  topology: "Topology",
+  number_theory: "Number Theory",
+  set_theory: "Set Theory",
+  geometry: "Geometry",
+  general: "General",
+};
+
+export type WarningCategory =
+  | "unjustified_implication"
+  | "missing_base_case"
+  | "undefined_variable"
+  | "vague_existence"
+  | "skipped_algebra"
+  | "quantifier_error"
+  | "other";
 
 export interface ProofStep {
   number: number;
@@ -23,6 +63,7 @@ export interface ProofStep {
   justification: string;
   hasWarning: boolean;
   warning: string | null;
+  warningCategory?: WarningCategory;
 }
 
 export interface Vulnerability {
@@ -30,6 +71,7 @@ export interface Vulnerability {
   issue: string;
   counterexample: string | null;
   severity: "critical" | "major" | "minor";
+  category?: WarningCategory;
 }
 
 export interface VerificationResult {
@@ -49,6 +91,7 @@ export interface ProofSuggestion {
 
 export interface ProofResult {
   proofType: ProofType;
+  mathDomain?: MathDomain;
   polishedProof: string;
   steps: ProofStep[];
   assumptions: string[];
@@ -69,4 +112,14 @@ export interface ApiResponse {
   success: boolean;
   data?: ProofResult;
   error?: string;
+  demo?: boolean;
 }
+
+export type DemoFixtureId =
+  | "direct"
+  | "contradiction"
+  | "induction"
+  | "epsilon_delta"
+  | "algebraic"
+  | "combinatorial"
+  | "set_identity";

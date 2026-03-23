@@ -5,6 +5,7 @@ import {
   ProofResult,
   VerificationResult,
   ProofSuggestion,
+  MathDomain,
 } from "@/types/proof";
 import {
   CLASSIFY_AND_POLISH_PROMPT,
@@ -14,6 +15,11 @@ import {
   SUGGEST_PROMPT,
   buildSuggestPrompt,
 } from "./prompt";
+import {
+  normalizeMathDomain,
+  normalizeProofType,
+  normalizeWarningCategory,
+} from "./proof-taxonomy";
 
 function cleanJson(raw: string): string {
   let cleaned = raw
@@ -59,6 +65,7 @@ async function llm(
 
 interface ClassifyAndPolishResult {
   proofType: ProofType;
+  mathDomain?: MathDomain;
   polishedProof: string;
   steps: ProofStep[];
   assumptions: string[];
@@ -80,6 +87,13 @@ export async function classifyAndPolish(
   if (!parsed.polishedProof || !Array.isArray(parsed.steps)) {
     throw new Error("Invalid classify+polish response");
   }
+  parsed.proofType = normalizeProofType(parsed.proofType);
+  parsed.mathDomain = normalizeMathDomain(parsed.mathDomain);
+  parsed.steps = parsed.steps.map((step, index) => ({
+    ...step,
+    number: step.number ?? index + 1,
+    warningCategory: normalizeWarningCategory(step.warningCategory),
+  }));
   return parsed;
 }
 
@@ -106,6 +120,10 @@ export async function verifyProof(
   if (typeof parsed.passed !== "boolean" || typeof parsed.score !== "number") {
     throw new Error("Invalid verification response");
   }
+  parsed.vulnerabilities = (parsed.vulnerabilities || []).map((v) => ({
+    ...v,
+    category: normalizeWarningCategory(v.category),
+  }));
   parsed.score = Math.max(0, Math.min(100, Math.round(parsed.score)));
   const hasCritical = parsed.vulnerabilities.some(
     (v) => v.severity === "critical"
@@ -137,6 +155,11 @@ export async function suggestAlternatives(
   if (!Array.isArray(parsed.suggestions)) {
     throw new Error("Invalid suggestions response");
   }
+  parsed.suggestions = parsed.suggestions.map((suggestion, index) => ({
+    ...suggestion,
+    id: suggestion.id || `s${index + 1}`,
+    proofType: normalizeProofType(suggestion.proofType),
+  }));
   return parsed.suggestions;
 }
 

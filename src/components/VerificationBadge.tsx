@@ -25,15 +25,15 @@ export default function VerificationBadge({
 
   return (
     <div
-      className={`flex items-center gap-4 rounded-xl border p-4 ${
+      className={`flex items-center gap-4 rounded-[22px] border p-4 ${
         passed
-          ? "border-emerald-500/30 bg-emerald-500/5"
-          : "border-red-500/30 bg-red-500/5"
+          ? "border-emerald-500/30 bg-emerald-500/8"
+          : "border-red-500/30 bg-red-500/8"
       }`}
     >
       <div className="flex flex-col items-center gap-0.5">
         <div
-          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 ${tier.ring}`}
+          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 bg-white/70 dark:bg-zinc-900/40 ${tier.ring}`}
         >
           <span className={`text-lg font-bold ${tier.color}`}>{score}</span>
         </div>

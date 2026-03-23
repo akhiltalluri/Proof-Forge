@@ -1,16 +1,19 @@
 import { ProofType } from "@/types/proof";
 
-const PROOF_TYPE_LIST = `"direct", "contradiction", "contrapositive", "induction", "construction", "cases", "uniqueness"`;
+const PROOF_TYPE_LIST = `"direct", "contradiction", "contrapositive", "induction", "construction", "cases", "uniqueness", "epsilon_delta", "algebraic", "combinatorial", "set_identity"`;
+const DOMAIN_LIST = `"analysis", "algebra", "combinatorics", "discrete_math", "topology", "number_theory", "set_theory", "geometry", "general"`;
+const WARNING_LIST = `"unjustified_implication", "missing_base_case", "undefined_variable", "vague_existence", "skipped_algebra", "quantifier_error", "other"`;
 
 // ── Stage 1: Classify + Polish (single call) ──────────────────────────
 
-export const CLASSIFY_AND_POLISH_PROMPT = `You are a rigorous mathematics proof editor specializing in real analysis.
+export const CLASSIFY_AND_POLISH_PROMPT = `You are a rigorous mathematics proof editor for undergraduate mathematics.
 
 Your task has two parts:
 A) Classify the proof technique used in the sketch.
 B) Rewrite the sketch into clean, structured, formally written mathematical prose tailored to that proof type.
 
 Valid proof types: ${PROOF_TYPE_LIST}.
+Valid broad math domains: ${DOMAIN_LIST}.
 
 Type-specific structure requirements:
 - "direct": State what is to be shown, then derive it step by step from the hypotheses.
@@ -20,10 +23,15 @@ Type-specific structure requirements:
 - "construction": Explicitly construct the object, then verify it satisfies all required properties.
 - "cases": Enumerate all cases, prove each exhaustively, confirm cases are exhaustive.
 - "uniqueness": Assume two objects satisfying the property exist, show they must be equal.
+- "epsilon_delta": Make the quantifiers and the choice of $\\varepsilon$/$\\delta$ explicit.
+- "algebraic": Emphasize the identities, substitutions, or factorization steps that drive the argument.
+- "combinatorial": Make the counting strategy or bijection explicit.
+- "set_identity": Use element-chasing or double inclusion explicitly.
 
 You MUST respond with valid JSON matching this exact schema:
 {
   "proofType": "one of: ${PROOF_TYPE_LIST}",
+  "mathDomain": "one of: ${DOMAIN_LIST}",
   "polishedProof": "Full rewritten proof. Use \\n between logical steps for readability.",
   "steps": [
     {
@@ -31,7 +39,8 @@ You MUST respond with valid JSON matching this exact schema:
       "statement": "The claim in this step.",
       "justification": "Why this holds — theorem, definition, or prior step.",
       "hasWarning": false,
-      "warning": null
+      "warning": null,
+      "warningCategory": "one of ${WARNING_LIST}, or null"
     }
   ],
   "assumptions": ["Each assumption/hypothesis."],
@@ -59,7 +68,7 @@ General rules:
 4. If the text uses "clearly", "obviously", "it follows", "trivially", "by a well-known theorem", or similar hand-waving, set hasWarning to true with a warning explaining what justification is missing.
 5. If a step jumps over intermediate reasoning, flag it.
 6. Follow the type-specific structure requirements above.
-7. Stay within real analysis.
+7. Infer the broad math domain from the proof sketch.
 8. Use \\n (newline) between logical steps in the polishedProof string for readable formatting.
 
 Return ONLY the JSON object. No markdown fences.`;
@@ -123,7 +132,8 @@ You MUST respond with valid JSON:
       "step": 1,
       "issue": "Description of the flaw. Use $...$ only for math expressions.",
       "counterexample": "A specific counterexample using $...$ for math, or null if none applies.",
-      "severity": "critical" | "major" | "minor"
+      "severity": "critical" | "major" | "minor",
+      "category": "one of ${WARNING_LIST}, or null"
     }
   ]
 }

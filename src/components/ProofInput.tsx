@@ -1,7 +1,9 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
-import { getRandomExample } from "@/lib/examples";
+import { useRef, useState, useCallback, useEffect } from "react";
+import { DEMO_FIXTURES } from "@/lib/demo-fixtures";
+import { getRandomExample, ProofExample } from "@/lib/examples";
+import { MATH_DOMAIN_LABELS, PROOF_TYPE_LABELS, DemoFixtureId } from "@/types/proof";
 import {
   SYMBOL_GROUPS,
   replaceLatexShortcuts,
@@ -12,14 +14,33 @@ import MathText from "./MathText";
 interface ProofInputProps {
   onSubmit: (proof: string) => void;
   isLoading: boolean;
+  demoMode?: boolean;
+  onRunDemo?: (fixtureId: DemoFixtureId) => void;
+  prefillText?: string | null;
+  onConsumePrefill?: () => void;
 }
 
-export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
+export default function ProofInput({
+  onSubmit,
+  isLoading,
+  demoMode = false,
+  onRunDemo,
+  prefillText,
+  onConsumePrefill,
+}: ProofInputProps) {
   const [text, setText] = useState("");
   const [showToolbar, setShowToolbar] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [activeExample, setActiveExample] = useState<ProofExample | null>(null);
   const lastExampleIdx = useRef<number | undefined>(undefined);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (prefillText) {
+      setText(prefillText);
+      onConsumePrefill?.();
+    }
+  }, [prefillText, onConsumePrefill]);
 
   const handleSubmit = () => {
     if (text.trim()) {
@@ -28,9 +49,10 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
   };
 
   const loadExample = () => {
-    const { text: example, index } = getRandomExample(lastExampleIdx.current);
+    const { example, index } = getRandomExample(lastExampleIdx.current);
     lastExampleIdx.current = index;
-    setText(example);
+    setActiveExample(example);
+    setText(example.text);
   };
 
   const insertSymbol = useCallback(
@@ -64,10 +86,10 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
   const latexDetected = hasLatexContent(text);
 
   return (
-    <div className="flex flex-col">
+    <div className="surface-panel flex flex-col rounded-[26px] p-5 sm:p-6">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          Informal Proof Sketch
+        <h2 className="display-font text-3xl font-semibold leading-none text-zinc-900 dark:text-zinc-100">
+          Rough Proof Sketch
         </h2>
         <div className="flex items-center gap-1.5">
           <button
@@ -95,8 +117,77 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
         </div>
       </div>
 
+      {demoMode && onRunDemo && (
+        <div className="mb-3 rounded-2xl border border-emerald-300/40 bg-emerald-50/90 p-3.5 dark:border-emerald-500/20 dark:bg-emerald-500/5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                Demo Mode
+              </p>
+              <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                Run canned proofs for screenshots, testing, and portfolio demos without using API credits.
+              </p>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {DEMO_FIXTURES.map((fixture) => (
+              <button
+                key={fixture.id}
+                onClick={() => onRunDemo(fixture.id)}
+                disabled={isLoading}
+                className="rounded-full border border-emerald-500/30 bg-white px-3 py-1.5 text-[11px] font-medium text-emerald-700 transition-all hover:bg-emerald-100 disabled:opacity-40 dark:bg-zinc-900 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
+                title={`${fixture.topic} • ${fixture.pitfall}`}
+              >
+                Run Demo: {fixture.title}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mb-3 rounded-2xl border border-zinc-200/90 bg-zinc-50/90 p-3.5 dark:border-zinc-700/50 dark:bg-zinc-800/30">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              Example Bank
+            </p>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+              Labeled examples span analysis, algebra, combinatorics, discrete math, and set theory.
+            </p>
+          </div>
+          <button
+            onClick={loadExample}
+            disabled={isLoading}
+            className="rounded-lg border border-zinc-300 dark:border-zinc-700 px-4 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-300 transition-all hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 disabled:opacity-40"
+          >
+            Load Example
+          </button>
+        </div>
+        {activeExample && (
+          <div className="mt-3 rounded-xl border border-zinc-200 bg-white/90 p-3 dark:border-zinc-700 dark:bg-zinc-900/60">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                {activeExample.title}
+              </span>
+              <span className="rounded-full border border-violet-500/25 bg-violet-500/15 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-300">
+                {PROOF_TYPE_LABELS[activeExample.proofType]}
+              </span>
+              <span className="rounded-full border border-sky-500/25 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-700 dark:text-sky-300">
+                {MATH_DOMAIN_LABELS[activeExample.mathDomain]}
+              </span>
+              <span className="rounded-full border border-zinc-300 px-2 py-0.5 text-[10px] font-semibold text-zinc-600 dark:border-zinc-600 dark:text-zinc-300">
+                {activeExample.difficulty}
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+              Pitfall to watch: {activeExample.pitfall}
+            </p>
+          </div>
+        )}
+      </div>
+
       {showToolbar && (
-        <div className="mb-2 rounded-xl border border-zinc-200 dark:border-zinc-700/50 bg-zinc-50 dark:bg-zinc-800/40 p-2.5 overflow-x-auto">
+        <div className="mb-2 rounded-2xl border border-zinc-200 dark:border-zinc-700/50 bg-zinc-50/90 dark:bg-zinc-800/40 p-3 overflow-x-auto">
           <div className="flex flex-col gap-2">
             {SYMBOL_GROUPS.map((group) => (
               <div key={group.label} className="flex items-center gap-1.5">
@@ -133,13 +224,13 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
         ref={textareaRef}
         value={text}
         onChange={handleChange}
-        placeholder="Paste your rough proof sketch here…"
-        className="min-h-[200px] w-full resize-none rounded-xl border border-zinc-300 dark:border-zinc-700/60 bg-zinc-100 dark:bg-zinc-800/50 p-4 text-sm leading-relaxed text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20"
+        placeholder="Paste your rough proof sketch here. For example: prove a set identity, an induction step, an epsilon argument, or a contradiction proof."
+        className="min-h-[240px] w-full resize-none rounded-[24px] border border-zinc-300/80 dark:border-zinc-700/60 bg-white/80 dark:bg-zinc-900/55 p-5 text-sm leading-relaxed text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20"
         disabled={isLoading}
       />
 
       {showPreview && (
-        <div className="mt-2 rounded-xl border border-zinc-200 dark:border-zinc-700/50 bg-zinc-50 dark:bg-zinc-800/30 p-4">
+        <div className="mt-3 rounded-2xl border border-zinc-200 dark:border-zinc-700/50 bg-zinc-50/90 dark:bg-zinc-800/30 p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
               LaTeX Preview
@@ -172,19 +263,15 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
         </div>
       )}
 
-      <div className="mt-3 flex items-center gap-3">
+      <div className="mt-4 flex items-center gap-3">
         <button
           onClick={handleSubmit}
           disabled={isLoading || !text.trim()}
-          className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+          className="rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
         >
           {isLoading ? (
             <span className="flex items-center gap-2">
-              <svg
-                className="h-4 w-4 animate-spin"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                 <circle
                   className="opacity-25"
                   cx="12"
@@ -199,7 +286,7 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                 />
               </svg>
-              Forging…
+              Forging...
             </span>
           ) : (
             "Forge Proof"
@@ -208,9 +295,9 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
         <button
           onClick={loadExample}
           disabled={isLoading}
-          className="rounded-lg border border-zinc-300 dark:border-zinc-700 px-4 py-2.5 text-sm text-zinc-500 dark:text-zinc-400 transition-all hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="rounded-full border border-zinc-300 dark:border-zinc-700 px-4 py-2.5 text-sm text-zinc-500 dark:text-zinc-400 transition-all hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          Load Example
+          Another Example
         </button>
       </div>
     </div>

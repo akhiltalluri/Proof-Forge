@@ -1,0 +1,2 @@
+ALTER TABLE "ArchivedProof" ADD COLUMN "title" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "ArchivedProof" ADD COLUMN "mathDomain" TEXT NOT NULL DEFAULT '';

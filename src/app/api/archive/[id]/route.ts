@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { ensureDatabaseSchema, prisma } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await ensureDatabaseSchema();
   const { id } = await params;
   const proof = await prisma.archivedProof.findUnique({ where: { id } });
   if (!proof) {
@@ -17,6 +21,7 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await ensureDatabaseSchema();
   const { id } = await params;
   try {
     await prisma.archivedProof.delete({ where: { id } });

@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { forgeProof } from "@/lib/openai";
+import { getDemoResult } from "@/lib/demo-fixtures";
+import { DemoFixtureId } from "@/types/proof";
+import { normalizeProofType } from "@/lib/proof-taxonomy";
 
 export async function POST(req: NextRequest) {
   try {
-    const { proof, apiKey, proofType } = await req.json();
+    const { proof, apiKey, proofType, demo, demoFixture } = await req.json();
+
+    if (process.env.DEMO_MODE === "true" && demo === true) {
+      const fixtureId = (demoFixture || "direct") as DemoFixtureId;
+      return NextResponse.json({
+        success: true,
+        data: getDemoResult(fixtureId),
+        demo: true,
+      });
+    }
 
     if (!proof || typeof proof !== "string" || proof.trim().length === 0) {
       return NextResponse.json(
@@ -24,12 +36,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await forgeProof(proof.trim(), key, proofType || undefined);
+    const result = await forgeProof(
+      proof.trim(),
+      key,
+      proofType ? normalizeProofType(proofType) : undefined
+    );
     return NextResponse.json({ success: true, data: result });
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "An unexpected error occurred";
     const status = (err as { status?: number })?.status;
+    const lowerMessage = message.toLowerCase();
 
     if (message.includes("Incorrect API key")) {
       return NextResponse.json(
@@ -48,6 +65,22 @@ export async function POST(req: NextRequest) {
             : "Rate limited by OpenAI. Wait a moment and try again.",
         },
         { status: 429 }
+      );
+    }
+
+    if (
+      lowerMessage.includes("fetch failed") ||
+      lowerMessage.includes("connection error") ||
+      lowerMessage.includes("api connection") ||
+      lowerMessage.includes("network")
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Failed to reach OpenAI. Check your internet connection and try again.",
+        },
+        { status: 502 }
       );
     }
 

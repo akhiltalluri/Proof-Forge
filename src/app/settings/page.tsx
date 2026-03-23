@@ -25,7 +25,7 @@ export default function SettingsPage() {
     const stored = localStorage.getItem("proof-forge-api-key") ?? "";
     setApiKey(stored);
 
-    fetch("/api/settings")
+    fetch("/api/settings", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         if (data?.archiveRetentionDays !== undefined) {
@@ -50,6 +50,7 @@ export default function SettingsPage() {
     setRetention(val);
     await fetch("/api/settings", {
       method: "PATCH",
+      cache: "no-store",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ archiveRetentionDays: val }),
     });

@@ -29,6 +29,30 @@ export async function POST(req: NextRequest) {
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "An unexpected error occurred";
+    const lowerMessage = message.toLowerCase();
+
+    if (message.includes("Incorrect API key")) {
+      return NextResponse.json(
+        { success: false, error: "Invalid OpenAI API key." },
+        { status: 401 }
+      );
+    }
+
+    if (
+      lowerMessage.includes("fetch failed") ||
+      lowerMessage.includes("connection error") ||
+      lowerMessage.includes("api connection") ||
+      lowerMessage.includes("network")
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Failed to reach OpenAI. Check your internet connection and try again.",
+        },
+        { status: 502 }
+      );
+    }
 
     return NextResponse.json(
       { success: false, error: message },

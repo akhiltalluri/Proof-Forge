@@ -10,10 +10,10 @@ interface StepCardProps {
 export default function StepCard({ step }: StepCardProps) {
   return (
     <div
-      className={`rounded-xl border p-4 transition-all ${
+      className={`rounded-[22px] border p-4 transition-all ${
         step.hasWarning
-          ? "border-amber-500/40 bg-amber-500/5"
-          : "border-zinc-200 bg-zinc-50 dark:border-zinc-700/50 dark:bg-zinc-800/30"
+          ? "border-amber-500/40 bg-amber-500/7"
+          : "border-zinc-200 bg-zinc-50/90 dark:border-zinc-700/50 dark:bg-zinc-800/30"
       }`}
     >
       <div className="flex items-start gap-3">
