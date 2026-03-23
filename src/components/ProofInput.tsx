@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { getRandomExample } from "@/lib/examples";
 
 interface ProofInputProps {
   onSubmit: (proof: string) => void;
   isLoading: boolean;
 }
 
-const EXAMPLE_PROOF = `Let (a_n) be a convergent sequence with a_n → L. Since convergent sequences are bounded, a_n is bounded. Therefore there exists M such that |a_n| ≤ M for all n.`;
-
 export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
   const [text, setText] = useState("");
+  const lastExampleIdx = useRef<number | undefined>(undefined);
 
   const handleSubmit = () => {
     if (text.trim()) {
@@ -19,7 +19,9 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
   };
 
   const loadExample = () => {
-    setText(EXAMPLE_PROOF);
+    const { text: example, index } = getRandomExample(lastExampleIdx.current);
+    lastExampleIdx.current = index;
+    setText(example);
   };
 
   return (

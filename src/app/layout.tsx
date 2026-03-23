@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Proof Forge — Polish Your Proofs",
   description:
-    "Transform informal math proof sketches into structured, rigorous proofs with step-by-step clarification and justification checks.",
+    "A personal tool that turns rough math proof sketches into structured, rigorous proofs with step-by-step reasoning and justification checks.",
 };
 
 export default function RootLayout({
