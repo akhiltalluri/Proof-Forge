@@ -124,7 +124,7 @@ export default function Home() {
             Proof Forge
           </h1>
           <p className="mt-2 text-sm text-zinc-400">
-            Paste a rough proof sketch, get a clean formal proof back — with every step verified.
+            Paste a rough proof sketch, get a clean formal proof back with every step verified.
           </p>
           <p className="mt-1 text-xs text-zinc-600">
             made by Akhil Talluri
