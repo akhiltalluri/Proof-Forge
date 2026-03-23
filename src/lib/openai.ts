@@ -32,6 +32,7 @@ async function llm(
     model: "gpt-4o-mini",
     temperature,
     max_tokens: 4096,
+    response_format: { type: "json_object" },
     messages: [
       { role: "system", content: system },
       { role: "user", content: user },
