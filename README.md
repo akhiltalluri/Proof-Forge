@@ -48,85 +48,6 @@ It also tags broad mathematical domains such as:
 - Stores proof history in SQLite so you can revisit, filter, and re-forge old drafts
 - Renders math with KaTeX and supports symbol helpers plus LaTeX preview
 
-## Demo Mode
-
-Demo mode is the easiest way to try the app without spending API credits.
-
-When it is enabled, the Forge page exposes `Run Demo` buttons that return canned proof results instead of calling OpenAI. The point is to let you test the UI, inspect proof tabs, record walkthroughs, and take screenshots with stable outputs.
-
-### How to set it up
-
-1. Create a local env file if you do not already have one:
-
-```bash
-cp .env.example .env.local
-```
-
-2. Open `.env.local` and turn demo mode on:
-
-```env
-DEMO_MODE=true
-```
-
-3. Decide whether you want demo-only mode or demo + live mode:
-
-Demo-only mode:
-
-```env
-DEMO_MODE=true
-```
-
-Demo + live API mode:
-
-```env
-OPENAI_API_KEY=sk-your-real-key-here
-DEMO_MODE=true
-```
-
-If `OPENAI_API_KEY` is omitted, the demo buttons will still work, but live forging will require entering a key in the UI later.
-
-4. Restart the dev server after changing `.env.local`:
-
-```bash
-npm run dev
-```
-
-5. Open the app:
-
-```text
-http://localhost:3000
-```
-
-### What you should see
-
-If setup worked correctly, the Forge page will show a small demo-mode message near the top and a `Demo Mode` box with several `Run Demo` buttons.
-
-Those demo buttons load canned proof results instantly, including:
-
-- direct proof
-- contradiction proof
-- induction proof
-- epsilon-delta proof
-- algebraic proof
-- combinatorial proof
-- set-theoretic proof
-
-### What demo mode does and does not do
-
-Demo mode does:
-
-- let you test the main product flow without API credits
-- let you inspect proof tabs, verification output, and suggestions
-- make screenshots and videos easier because outputs are predictable
-
-Demo mode does not:
-
-- replace the live model entirely
-- test actual OpenAI responses
-- measure model quality
-
-It is a parallel no-credit path for testing. If you also set `OPENAI_API_KEY`, you can use both demo fixtures and normal live forging in the same local app.
-
 ## Architecture
 
 - Frontend: Next.js App Router, React, TypeScript
@@ -185,6 +106,165 @@ http://localhost:3000
 npm run build
 npm run start
 ```
+
+## Demo Mode
+
+Demo mode is the easiest way to run Proof Forge without relying on OpenAI credits.
+
+When demo mode is enabled, the Forge page shows `Run Demo` buttons. Those buttons return canned proof results from local fixtures instead of making a live API call. This is useful for testing the UI, recording a walkthrough, taking screenshots, or letting someone explore the project without first setting up an API key.
+
+### Exactly where to configure it
+
+Demo mode is configured through the file:
+
+```text
+Proof-Forge/.env.local
+```
+
+That file lives in the project root, meaning the same folder that contains:
+
+- `package.json`
+- `README.md`
+- `prisma/`
+- `src/`
+
+If `.env.local` does not exist yet, create it in the project root.
+
+### Step-by-step setup
+
+1. Open a terminal in the repository root:
+
+```bash
+cd /path/to/Proof-Forge
+```
+
+2. Create `.env.local` from the example file:
+
+```bash
+cp .env.example .env.local
+```
+
+After this command, you should have:
+
+```text
+Proof-Forge/.env.local
+```
+
+3. Open `Proof-Forge/.env.local` in your editor.
+
+4. Change the demo flag from `false` to `true`.
+
+Your file should contain at least:
+
+```env
+DEMO_MODE=true
+```
+
+If you want demo mode only, this is enough:
+
+```env
+DEMO_MODE=true
+```
+
+If you want both demo mode and live API usage in the same app, use:
+
+```env
+OPENAI_API_KEY=sk-your-real-key-here
+DEMO_MODE=true
+```
+
+### What each setting means
+
+`DEMO_MODE=true`
+
+- turns on the demo fixtures
+- enables `Run Demo` buttons on the Forge page
+- lets you load canned proof results without calling OpenAI
+
+`OPENAI_API_KEY=...`
+
+- is optional for demo mode
+- is only needed if you also want to use the normal live Forge flow
+- can be omitted entirely if you only care about demo fixtures
+
+### Important: restart after editing `.env.local`
+
+Next.js reads `.env.local` when the dev server starts. If the server is already running, simply saving the file is not enough.
+
+After changing `.env.local`, stop and restart the app:
+
+```bash
+npm run dev
+```
+
+If you already had the dev server running, stop it first with `Ctrl+C`, then run:
+
+```bash
+npm run dev
+```
+
+### How to verify demo mode is working
+
+1. Start the app:
+
+```bash
+npm run dev
+```
+
+2. Open:
+
+```text
+http://localhost:3000
+```
+
+3. Go to the Forge page if you are not already there.
+
+4. Look for these two signs:
+
+- a small message near the top saying demo mode is on
+- a `Demo Mode` panel with several `Run Demo` buttons
+
+If you see those, the app has picked up `DEMO_MODE=true` correctly.
+
+### What the demo buttons do
+
+The demo buttons load canned proof outputs instantly. They are meant to simulate the full Forge experience without depending on live model calls.
+
+Current demo fixtures include:
+
+- direct proof
+- contradiction proof
+- induction proof
+- epsilon-delta proof
+- algebraic proof
+- combinatorial proof
+- set-theoretic proof
+
+### Common setup mistakes
+
+If demo mode does not appear, check these first:
+
+- you edited `.env.example` instead of `.env.local`
+- `.env.local` is not in the project root
+- `DEMO_MODE` is still set to `false`
+- you did not restart `npm run dev` after editing the file
+- you are looking at an old browser tab or stale dev server
+
+### What demo mode does and does not do
+
+Demo mode does:
+
+- let you test the main product flow without API credits
+- let you inspect proof tabs, verification output, and suggestions
+- make screenshots and videos easier because outputs are predictable
+
+Demo mode does not:
+
+- replace the live model entirely
+- test actual OpenAI responses
+- measure model quality
+
+It is a parallel no-credit path for testing. If you also set `OPENAI_API_KEY`, you can use both demo fixtures and normal live forging in the same local app.
 
 ## Proof History
 
