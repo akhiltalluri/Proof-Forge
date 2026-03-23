@@ -8,7 +8,7 @@ import {
   PROOF_TYPE_LABELS,
   MATH_DOMAIN_LABELS,
 } from "@/types/proof";
-import { hasLatexContent } from "@/lib/symbols";
+import { convertToLatex, hasLatexContent } from "@/lib/symbols";
 import MathText from "./MathText";
 import StepCard from "./StepCard";
 import VerificationBadge from "./VerificationBadge";
@@ -56,10 +56,11 @@ export default function ProofOutput({
   onNotify,
 }: ProofOutputProps) {
   const [activeTab, setActiveTab] = useState<Tab>("proof");
-  const [viewMode, setViewMode] = useState<"rendered" | "preview" | "raw">("rendered");
+  const [viewMode, setViewMode] = useState<"plain" | "preview" | "raw">("plain");
 
   const warningCount = result?.steps.filter((s) => s.hasWarning).length ?? 0;
   const vulnCount = result?.verification?.vulnerabilities?.length ?? 0;
+  const latexProof = result ? convertToLatex(result.polishedProof) : "";
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -216,7 +217,7 @@ export default function ProofOutput({
           <div className="rounded-[24px] border border-zinc-200 bg-zinc-50/90 p-5 dark:border-zinc-700/40 dark:bg-zinc-800/30">
             <div className="mb-3 flex items-center justify-end">
               <div className="flex items-center rounded-full border border-zinc-200 p-0.5 dark:border-zinc-700/50">
-                {(["rendered", "preview", "raw"] as const).map((mode) => (
+                {(["plain", "preview", "raw"] as const).map((mode) => (
                   <button
                     key={mode}
                     onClick={() => setViewMode(mode)}
@@ -226,8 +227,8 @@ export default function ProofOutput({
                         : "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
                     }`}
                   >
-                    {mode === "rendered"
-                      ? "Rendered"
+                    {mode === "plain"
+                      ? "Plain Text"
                       : mode === "preview"
                         ? "LaTeX Preview"
                         : "Raw LaTeX"}
@@ -236,10 +237,10 @@ export default function ProofOutput({
               </div>
             </div>
 
-            {viewMode === "rendered" && (
-              <MathText className="text-sm leading-relaxed text-zinc-800 dark:text-zinc-200 proof-text">
+            {viewMode === "plain" && (
+              <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
                 {result.polishedProof}
-              </MathText>
+              </div>
             )}
             {viewMode === "preview" && (
               <div className="rounded-[22px] border border-zinc-200 bg-zinc-50/90 p-4 dark:border-zinc-700/50 dark:bg-zinc-800/30">
@@ -248,9 +249,9 @@ export default function ProofOutput({
                     LaTeX Preview
                   </span>
                 </div>
-                {hasLatexContent(result.polishedProof) ? (
+                {hasLatexContent(latexProof) ? (
                   <MathText className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-                    {result.polishedProof}
+                    {latexProof}
                   </MathText>
                 ) : (
                   <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
@@ -261,7 +262,7 @@ export default function ProofOutput({
             )}
             {viewMode === "raw" && (
               <pre className="whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-700 font-mono dark:text-zinc-300">
-                {result.polishedProof}
+                {latexProof}
               </pre>
             )}
           </div>

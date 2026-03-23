@@ -292,13 +292,6 @@ export default function ProofInput({
             "Forge Proof"
           )}
         </button>
-        <button
-          onClick={loadExample}
-          disabled={isLoading}
-          className="rounded-full border border-zinc-300 dark:border-zinc-700 px-4 py-2.5 text-sm text-zinc-500 dark:text-zinc-400 transition-all hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Another Example
-        </button>
       </div>
     </div>
   );

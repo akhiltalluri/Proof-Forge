@@ -26,6 +26,27 @@ interface ArchivedProof {
 const DOMAIN_KEYS = Object.keys(MATH_DOMAIN_LABELS) as MathDomain[];
 const TYPE_KEYS = Object.keys(PROOF_TYPE_LABELS) as ProofType[];
 
+const ARCHIVE_PROOF_TYPE_LABELS: Partial<Record<ProofType, string>> = {
+  direct: "Direct",
+  contradiction: "Contradiction",
+  contrapositive: "Contrapositive",
+  induction: "Induction",
+  construction: "Construction",
+  cases: "Cases",
+  uniqueness: "Uniqueness",
+  epsilon_delta: "Epsilon-Delta",
+  algebraic: "Algebraic",
+  combinatorial: "Combinatorial",
+  set_identity: "Set Identity",
+};
+
+const formatProofType = (proofType: string) =>
+  ARCHIVE_PROOF_TYPE_LABELS[proofType as ProofType] ??
+  proofType
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+
 export default function ArchivePage() {
   const router = useRouter();
   const [proofs, setProofs] = useState<ArchivedProof[]>([]);
@@ -222,7 +243,7 @@ export default function ArchivePage() {
                     </span>
                   )}
                   <span className="rounded-full border border-violet-500/25 bg-violet-500/15 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-300">
-                    {proof.proofType.replace(/_/g, " ")}
+                    {formatProofType(proof.proofType)}
                   </span>
                   <span
                     className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${

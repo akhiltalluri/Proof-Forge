@@ -131,32 +131,39 @@ const UNICODE_PATTERN = new RegExp(
 );
 
 /**
- * Convert informal proof text with Unicode math symbols into LaTeX-wrapped
- * notation. Splits on sentence boundaries and wraps segments that contain
- * math-like tokens in $...$ delimiters.
+ * Convert informal proof text with Unicode math symbols into inline LaTeX
+ * while leaving ordinary prose outside math mode so words do not get
+ * italicized.
  */
 export function convertToLatex(text: string): string {
-  const lines = text.split("\n");
-  return lines
-    .map((line) => {
-      const segments = line.split(/(?<=[.!?])\s+/);
-      return segments
-        .map((seg) => {
-          const hasMath =
-            UNICODE_PATTERN.test(seg) ||
-            /[_^{}]|[a-zA-Z]_\{/.test(seg) ||
-            /\b[a-z]_[a-z0-9]/i.test(seg);
-          UNICODE_PATTERN.lastIndex = 0;
+  const protectedBlocks: string[] = [];
+  const protect = (value: string) => {
+    const index = protectedBlocks.push(value) - 1;
+    return `@@LATEX_BLOCK_${index}@@`;
+  };
 
-          if (!hasMath) return seg;
+  let converted = text.replace(
+    /(\$\$[\s\S]*?\$\$|\$[^$]+\$|\\\([\s\S]*?\\\)|\\\[[\s\S]*?\\])/g,
+    (match) => protect(match)
+  );
 
-          const converted = seg.replace(UNICODE_PATTERN, (m) => UNICODE_TO_LATEX[m] ?? m);
-          if (converted.includes("$")) return converted;
-          return `$${converted}$`;
-        })
-        .join(" ");
-    })
-    .join("\n");
+  converted = converted.replace(UNICODE_PATTERN, (match) => {
+    const latex = UNICODE_TO_LATEX[match];
+    return latex ? ` $${latex}$ ` : match;
+  });
+
+  converted = converted
+    .replace(
+      /\b([A-Za-z0-9_(){}\[\]]+)\s+\$(\\(?:in|notin|subseteq|subset|supseteq|supset|leq|geq|neq|approx|equiv|cup|cap|setminus|to|mapsto|leftarrow|leftrightarrow|implies|iff|land|lor))\$\s+([A-Za-z0-9_(){}\[\]]+)\b/g,
+      (_, left, operator, right) => `$${left} ${operator} ${right}$`
+    )
+    .replace(
+      /\$(\\(?:forall|exists))\$\s+([A-Za-z][A-Za-z0-9_]*)/g,
+      (_, quantifier, variable) => `$${quantifier} ${variable}$`
+    )
+    .replace(/\s{2,}/g, " ");
+
+  return converted.replace(/@@LATEX_BLOCK_(\d+)@@/g, (_, idx) => protectedBlocks[Number(idx)]);
 }
 
 export function hasLatexContent(text: string): boolean {
