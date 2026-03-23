@@ -41,8 +41,24 @@ export const SYMBOL_GROUPS: SymbolGroup[] = [
     ],
   },
   {
+    label: "Sets",
+    symbols: [
+      { latex: "\\mathbb{R}", unicode: "ℝ", display: "ℝ" },
+      { latex: "\\mathbb{N}", unicode: "ℕ", display: "ℕ" },
+      { latex: "\\mathbb{Z}", unicode: "ℤ", display: "ℤ" },
+      { latex: "\\mathbb{Q}", unicode: "ℚ", display: "ℚ" },
+      { latex: "\\mathbb{C}", unicode: "ℂ", display: "ℂ" },
+      { latex: "\\emptyset", unicode: "∅", display: "∅" },
+      { latex: "\\cup", unicode: "∪", display: "∪" },
+      { latex: "\\cap", unicode: "∩", display: "∩" },
+      { latex: "\\setminus", unicode: "∖", display: "∖" },
+    ],
+  },
+  {
     label: "Relations",
     symbols: [
+      { latex: "<", unicode: "<", display: "<" },
+      { latex: ">", unicode: ">", display: ">" },
       { latex: "\\leq", unicode: "≤", display: "≤" },
       { latex: "\\geq", unicode: "≥", display: "≥" },
       { latex: "\\neq", unicode: "≠", display: "≠" },
@@ -50,6 +66,8 @@ export const SYMBOL_GROUPS: SymbolGroup[] = [
       { latex: "\\notin", unicode: "∉", display: "∉" },
       { latex: "\\subset", unicode: "⊂", display: "⊂" },
       { latex: "\\subseteq", unicode: "⊆", display: "⊆" },
+      { latex: "\\supset", unicode: "⊃", display: "⊃" },
+      { latex: "\\supseteq", unicode: "⊇", display: "⊇" },
       { latex: "\\approx", unicode: "≈", display: "≈" },
       { latex: "\\equiv", unicode: "≡", display: "≡" },
     ],
