@@ -24,29 +24,36 @@ Type-specific structure requirements:
 You MUST respond with valid JSON matching this exact schema:
 {
   "proofType": "one of: ${PROOF_TYPE_LIST}",
-  "polishedProof": "Full rewritten proof using LaTeX math notation ($...$). Each sentence on its own line.",
+  "polishedProof": "Full rewritten proof. Use \\n between logical steps for readability.",
   "steps": [
     {
       "number": 1,
-      "statement": "The claim in this step, using LaTeX for math.",
+      "statement": "The claim in this step.",
       "justification": "Why this holds — theorem, definition, or prior step.",
       "hasWarning": false,
       "warning": null
     }
   ],
-  "assumptions": ["Each assumption/hypothesis, using LaTeX."],
-  "conclusion": "The final conclusion, using LaTeX."
+  "assumptions": ["Each assumption/hypothesis."],
+  "conclusion": "The final conclusion."
 }
 
-Rules:
+LaTeX formatting rules (CRITICAL — follow exactly):
+- Wrap ONLY mathematical expressions in $...$ delimiters: variables ($x$, $n$, $\\varepsilon$), equations ($a_n \\to L$), inequalities ($|a_n - L| < \\varepsilon$), set notation ($x \\in \\mathbb{R}$), quantifiers ($\\forall$, $\\exists$).
+- NEVER wrap plain English words or phrases in $...$. Wrong: $Assume$, $Therefore$, $bounded$. Right: Assume, Therefore, bounded.
+- Use standard notation: $\\forall$, $\\exists$, $\\in$, $\\leq$, $\\implies$, $\\mathbb{R}$, $\\mathbb{N}$, etc.
+- Every variable, number in a math context, operator, and formula must be inside $...$.
+- Plain English connectives (assume, then, therefore, since, by, hence) stay outside $...$.
+
+General rules:
 1. Identify all assumptions and the conclusion.
 2. Break the proof into small, explicit logical steps.
 3. Rewrite in formal mathematical English. Replace vague language with precise statements.
-4. Use standard notation: $\\\\forall$, $\\\\exists$, $\\\\in$, $\\\\leq$, $\\\\implies$, etc.
-5. If the text uses "clearly", "obviously", "it follows", "trivially", "by a well-known theorem", or similar hand-waving, set hasWarning to true with a warning explaining what justification is missing.
-6. If a step jumps over intermediate reasoning, flag it.
-7. Follow the type-specific structure requirements above.
-8. Stay within real analysis.
+4. If the text uses "clearly", "obviously", "it follows", "trivially", "by a well-known theorem", or similar hand-waving, set hasWarning to true with a warning explaining what justification is missing.
+5. If a step jumps over intermediate reasoning, flag it.
+6. Follow the type-specific structure requirements above.
+7. Stay within real analysis.
+8. Use \\n (newline) between logical steps in the polishedProof string for readable formatting.
 
 Return ONLY the JSON object. No markdown fences.`;
 
@@ -84,13 +91,17 @@ Severity levels:
 - "major": A significant gap that undermines confidence (e.g., missing case, unjustified bound).
 - "minor": A small imprecision that doesn't break the proof but should be fixed (e.g., missing quantifier, imprecise wording).
 
-Score the proof 0–100:
-- 90–100: Airtight, no issues.
-- 70–89: Structurally sound but has minor gaps.
-- 50–69: Has major gaps that need addressing.
-- 0–49: Fundamentally flawed.
+Score the proof 0–100 based on how solid the logical reasoning is:
+- 95–100: Publishable quality. Every step is fully justified, all quantifiers are correct, no gaps whatsoever.
+- 85–94: Rigorous proof with only cosmetic issues — minor notation inconsistencies or phrasing that could be tightened.
+- 70–84: Structurally sound but has minor logical gaps, missing quantifiers, or steps that could use more justification.
+- 50–69: Has major gaps that need addressing — missing cases, unjustified leaps, or steps that don't follow.
+- 25–49: Fundamentally flawed logic, circular reasoning, or critical misapplication of theorems.
+- 0–24: Not a valid proof — the argument does not establish the claimed result.
 
 A proof "passes" verification only if score >= 70 and there are zero critical vulnerabilities.
+
+LaTeX in output fields: Use $...$ ONLY around mathematical expressions (variables, formulas, equations). Do NOT wrap plain English in $...$.
 
 You MUST respond with valid JSON:
 {
@@ -100,8 +111,8 @@ You MUST respond with valid JSON:
   "vulnerabilities": [
     {
       "step": 1,
-      "issue": "Description of the flaw.",
-      "counterexample": "A specific counterexample, or null if none applies.",
+      "issue": "Description of the flaw. Use $...$ only for math expressions.",
+      "counterexample": "A specific counterexample using $...$ for math, or null if none applies.",
       "severity": "critical" | "major" | "minor"
     }
   ]
@@ -137,6 +148,8 @@ For each suggestion:
 
 Valid proof types: ${PROOF_TYPE_LIST}.
 
+LaTeX: Use $...$ ONLY around mathematical expressions. Do NOT wrap plain English in $...$.
+
 You MUST respond with valid JSON:
 {
   "suggestions": [
@@ -145,7 +158,7 @@ You MUST respond with valid JSON:
       "proofType": "one of the valid types",
       "label": "Short name, e.g. 'Direct proof via triangle inequality'",
       "description": "1-2 sentences explaining the approach and why it might work better.",
-      "sketch": "2-4 sentence outline of the key steps, using LaTeX ($...$) for math."
+      "sketch": "2-4 sentence outline of the key steps, using $...$ for math only."
     }
   ]
 }

@@ -7,29 +7,21 @@ interface VerificationBadgeProps {
   proofTypeLabel?: string;
 }
 
+function getScoreTier(score: number): { label: string; color: string; ring: string } {
+  if (score >= 95) return { label: "Airtight", color: "text-emerald-400", ring: "border-emerald-500/40" };
+  if (score >= 85) return { label: "Rigorous", color: "text-emerald-400", ring: "border-emerald-500/40" };
+  if (score >= 70) return { label: "Sound", color: "text-yellow-400", ring: "border-yellow-500/40" };
+  if (score >= 50) return { label: "Needs Work", color: "text-orange-400", ring: "border-orange-500/40" };
+  if (score >= 25) return { label: "Flawed", color: "text-red-400", ring: "border-red-500/40" };
+  return { label: "Invalid", color: "text-red-400", ring: "border-red-500/40" };
+}
+
 export default function VerificationBadge({
   verification,
   proofTypeLabel,
 }: VerificationBadgeProps) {
   const { passed, score, summary } = verification;
-
-  const scoreColor =
-    score >= 90
-      ? "text-emerald-400"
-      : score >= 70
-        ? "text-yellow-400"
-        : score >= 50
-          ? "text-orange-400"
-          : "text-red-400";
-
-  const ringColor =
-    score >= 90
-      ? "border-emerald-500/40"
-      : score >= 70
-        ? "border-yellow-500/40"
-        : score >= 50
-          ? "border-orange-500/40"
-          : "border-red-500/40";
+  const tier = getScoreTier(score);
 
   return (
     <div
@@ -39,13 +31,16 @@ export default function VerificationBadge({
           : "border-red-500/30 bg-red-500/5"
       }`}
     >
-      <div
-        className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 ${ringColor}`}
-      >
-        <span className={`text-lg font-bold ${scoreColor}`}>{score}</span>
+      <div className="flex flex-col items-center gap-0.5">
+        <div
+          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 ${tier.ring}`}
+        >
+          <span className={`text-lg font-bold ${tier.color}`}>{score}</span>
+        </div>
+        <span className="text-[9px] text-zinc-500">/ 100</span>
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {passed ? (
             <svg
               className="h-5 w-5 text-emerald-400"
@@ -79,6 +74,13 @@ export default function VerificationBadge({
             className={`text-sm font-semibold ${passed ? "text-emerald-300" : "text-red-300"}`}
           >
             {passed ? "Verification Passed" : "Verification Failed"}
+          </span>
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
+            passed
+              ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/25"
+              : "bg-red-500/10 text-red-300 border-red-500/25"
+          }`}>
+            {tier.label}
           </span>
           {proofTypeLabel && (
             <span className="rounded-full bg-violet-500/15 px-2.5 py-0.5 text-[10px] font-semibold text-violet-300 border border-violet-500/25">

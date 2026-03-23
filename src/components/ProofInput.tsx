@@ -5,7 +5,6 @@ import { getRandomExample } from "@/lib/examples";
 import {
   SYMBOL_GROUPS,
   replaceLatexShortcuts,
-  convertToLatex,
   hasLatexContent,
 } from "@/lib/symbols";
 import MathText from "./MathText";
@@ -62,13 +61,6 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
     setText(replaceLatexShortcuts(e.target.value));
   };
 
-  const handleConvertToLatex = () => {
-    if (text.trim()) {
-      setText(convertToLatex(text));
-      setShowPreview(true);
-    }
-  };
-
   const latexDetected = hasLatexContent(text);
 
   return (
@@ -78,14 +70,6 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
           Informal Proof Sketch
         </h2>
         <div className="flex items-center gap-1.5">
-          <button
-            onClick={handleConvertToLatex}
-            disabled={isLoading || !text.trim()}
-            className="rounded-lg border border-zinc-700 px-2.5 py-1 text-[11px] text-zinc-400 transition-all hover:border-indigo-500/50 hover:text-indigo-300 disabled:opacity-30 disabled:cursor-not-allowed"
-            title="Convert Unicode math symbols to LaTeX notation"
-          >
-            Convert to LaTeX
-          </button>
           <button
             onClick={() => setShowPreview((v) => !v)}
             className={`rounded-lg border px-2.5 py-1 text-[11px] transition-all ${
@@ -173,7 +157,7 @@ export default function ProofInput({ onSubmit, isLoading }: ProofInputProps) {
                   <code className="rounded bg-zinc-800 px-1 py-0.5 text-amber-300">
                     $...$
                   </code>{" "}
-                  to preview, or click &quot;Convert to LaTeX&quot; above.
+                  to see rendered output.
                 </p>
                 <MathText className="text-sm leading-relaxed text-zinc-400">
                   {text}

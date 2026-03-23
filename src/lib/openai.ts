@@ -92,6 +92,11 @@ export async function verifyProof(
   if (typeof parsed.passed !== "boolean" || typeof parsed.score !== "number") {
     throw new Error("Invalid verification response");
   }
+  parsed.score = Math.max(0, Math.min(100, Math.round(parsed.score)));
+  const hasCritical = parsed.vulnerabilities.some(
+    (v) => v.severity === "critical"
+  );
+  parsed.passed = parsed.score >= 70 && !hasCritical;
   return parsed;
 }
 
