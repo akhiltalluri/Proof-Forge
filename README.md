@@ -109,118 +109,52 @@ Demo mode is the easiest way to run Proof Forge without relying on OpenAI credit
 
 When demo mode is enabled, the Forge page shows `Run Demo` buttons. Those buttons return canned proof results from local fixtures instead of making a live API call. This is useful for testing the UI, recording a walkthrough, taking screenshots, or letting someone explore the project without first setting up an API key.
 
-### Exactly where to configure it
+### Demo setup
 
-Demo mode is configured through the file:
+Demo mode is controlled from the project-root file `.env.local`.
 
-```text
-Proof-Forge/.env.local
-```
-
-That file lives in the project root, meaning the same folder that contains:
-
-- `package.json`
-- `README.md`
-- `prisma/`
-- `src/`
-
-If `.env.local` does not exist yet, create it in the project root.
-
-### Step-by-step setup
-
-1. Open a terminal in the repository root:
-
-```bash
-cd /path/to/Proof-Forge
-```
-
-2. Create `.env.local` from the example file:
+1. Create `.env.local` from the example file:
 
 ```bash
 cp .env.example .env.local
 ```
 
-After this command, you should have:
+2. Open `.env.local` and change:
 
-```text
-Proof-Forge/.env.local
+```env
+DEMO_MODE=false
 ```
 
-3. Open `Proof-Forge/.env.local` in your editor.
-
-4. Change the demo flag from `false` to `true`.
-
-Your file should contain at least:
+to:
 
 ```env
 DEMO_MODE=true
 ```
 
-If you want demo mode only, this is enough:
-
-```env
-DEMO_MODE=true
-```
-
-If you want both demo mode and live API usage in the same app, use:
+3. If you also want live OpenAI usage available in the same app, add:
 
 ```env
 OPENAI_API_KEY=sk-your-real-key-here
-DEMO_MODE=true
 ```
 
-### What each setting means
+`OPENAI_API_KEY` is optional for demo mode. `DEMO_MODE=true` by itself is enough to enable the canned fixtures.
 
-`DEMO_MODE=true`
-
-- turns on the demo fixtures
-- enables `Run Demo` buttons on the Forge page
-- lets you load canned proof results without calling OpenAI
-
-`OPENAI_API_KEY=...`
-
-- is optional for demo mode
-- is only needed if you also want to use the normal live Forge flow
-- can be omitted entirely if you only care about demo fixtures
-
-### Important: restart after editing `.env.local`
-
-Next.js reads `.env.local` when the dev server starts. If the server is already running, simply saving the file is not enough.
-
-After changing `.env.local`, stop and restart the app:
+4. Restart the dev server after editing `.env.local`:
 
 ```bash
 npm run dev
 ```
 
-If you already had the dev server running, stop it first with `Ctrl+C`, then run:
+If it was already running, stop it with `Ctrl+C` first, then run `npm run dev` again.
 
-```bash
-npm run dev
-```
+### How to verify it
 
-### How to verify demo mode is working
-
-1. Start the app:
-
-```bash
-npm run dev
-```
-
-2. Open:
-
-```text
-http://localhost:3000
-```
-
-3. Go to the Forge page if you are not already there.
-
-4. Look for these two signs:
+1. Open [http://localhost:3000](http://localhost:3000)
+2. Go to `/forge` if you are not already there
+3. Confirm both of these appear:
 
 - a small message near the top saying demo mode is on
 - a `Demo Mode` panel with several `Run Demo` buttons
-
-If you see those, the app has picked up `DEMO_MODE=true` correctly.
 
 ### What the demo buttons do
 
@@ -241,7 +175,7 @@ Current demo fixtures include:
 If demo mode does not appear, check these first:
 
 - you edited `.env.example` instead of `.env.local`
-- `.env.local` is not in the project root
+- `.env.local` is not in the project root next to `package.json`
 - `DEMO_MODE` is still set to `false`
 - you did not restart `npm run dev` after editing the file
 - you are looking at an old browser tab or stale dev server
