@@ -23,7 +23,9 @@ export default function ForgePage() {
   const [lastProof, setLastProof] = useState<string>("");
   const [hasKey, setHasKey] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
+  const [liveModeAvailable, setLiveModeAvailable] = useState(false);
   const [lastIsDemo, setLastIsDemo] = useState(false);
+  const [lastDemoKind, setLastDemoKind] = useState<"fixture" | "mock" | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [prefillText, setPrefillText] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -45,8 +47,14 @@ export default function ForgePage() {
   useEffect(() => {
     fetch("/api/config", { cache: "no-store" })
       .then((r) => r.json())
-      .then((data: { demoMode?: boolean }) => setDemoMode(!!data.demoMode))
-      .catch(() => setDemoMode(false));
+      .then((data: { demoMode?: boolean; liveModeAvailable?: boolean }) => {
+        setDemoMode(!!data.demoMode);
+        setLiveModeAvailable(!!data.liveModeAvailable);
+      })
+      .catch(() => {
+        setDemoMode(false);
+        setLiveModeAvailable(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -70,6 +78,7 @@ export default function ForgePage() {
       setResult(null);
       setLastProof("");
       setLastIsDemo(true);
+      setLastDemoKind("fixture");
 
       const t1 = setTimeout(() => setStage("polishing"), 350);
       const t2 = setTimeout(() => setStage("verifying"), 850);
@@ -92,9 +101,12 @@ export default function ForgePage() {
           setError(data.error ?? "Demo failed.");
           setStage("idle");
           setLastIsDemo(false);
+          setLastDemoKind(null);
         } else if (data.data) {
           setResult(data.data);
           setStage("done");
+          setLastIsDemo(!!data.demo);
+          setLastDemoKind(data.demo ? data.demoKind ?? "fixture" : null);
           showToast("Demo loaded with canned fixture data");
         }
       } catch {
@@ -104,6 +116,7 @@ export default function ForgePage() {
         setError("Demo failed to load.");
         setStage("idle");
         setLastIsDemo(false);
+        setLastDemoKind(null);
       }
     },
     [showToast]
@@ -116,6 +129,7 @@ export default function ForgePage() {
       setResult(null);
       setLastProof(proof);
       setLastIsDemo(false);
+      setLastDemoKind(null);
 
       const key =
         typeof window !== "undefined"
@@ -150,6 +164,8 @@ export default function ForgePage() {
         } else if (data.data) {
           setResult(data.data);
           setStage("done");
+          setLastIsDemo(!!data.demo);
+          setLastDemoKind(data.demo ? data.demoKind ?? "mock" : null);
 
           if (!data.demo) {
             fetch("/api/archive", {
@@ -164,6 +180,8 @@ export default function ForgePage() {
             })
               .then(() => showToast("Saved to proof history"))
               .catch(() => {});
+          } else if (data.demoKind === "mock") {
+            showToast("Offline mock demo result generated locally");
           }
         }
       } catch {
@@ -231,7 +249,7 @@ export default function ForgePage() {
         <div className="soft-rule mt-5" />
 
         <div className="pt-4 text-center">
-        {!hasKey && !demoMode && (
+        {!hasKey && !liveModeAvailable && !demoMode && (
           <button
             onClick={() => setShowKeyModal(true)}
             className="inline-flex items-center gap-1.5 rounded-full border border-zinc-300 bg-white/80 px-4 py-2 text-xs font-medium text-zinc-600 transition-all hover:border-zinc-400 hover:text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:text-zinc-100"
@@ -253,10 +271,21 @@ export default function ForgePage() {
           </button>
         )}
         {demoMode && (
-          <p className="mt-2 text-[11px] text-emerald-600 dark:text-emerald-400">
-            Demo mode is on. Try the canned examples below without spending API
-            credits.
-          </p>
+          <div className="mt-2 space-y-1 text-[11px] text-emerald-600 dark:text-emerald-400">
+            <p>
+              Demo mode is on. The canned `Run Demo` buttons still use local fixture outputs.
+            </p>
+            {!hasKey && !liveModeAvailable && (
+              <p>
+                Custom proof input now uses a local mock proof pipeline, so results are illustrative and do not call the OpenAI API.
+              </p>
+            )}
+            {(hasKey || liveModeAvailable) && (
+              <p>
+                Live forging is also available because an API key is present, so custom submissions can still use the real model.
+              </p>
+            )}
+          </div>
         )}
         </div>
       </div>
@@ -305,6 +334,7 @@ export default function ForgePage() {
               onSubmit={handleSubmit}
               isLoading={isLoading}
               demoMode={demoMode}
+              liveModeAvailable={liveModeAvailable || hasKey}
               onRunDemo={runDemo}
               prefillText={prefillText}
               onConsumePrefill={() => setPrefillText(null)}
@@ -315,6 +345,7 @@ export default function ForgePage() {
               onRetryWithSuggestion={handleRetryWithSuggestion}
               isLoading={isLoading}
               isDemo={lastIsDemo}
+              demoKind={lastDemoKind}
               onNotify={showToast}
             />
           </div>

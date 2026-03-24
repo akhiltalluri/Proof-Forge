@@ -20,6 +20,7 @@ interface ProofInputProps {
   onSubmit: (proof: string) => void;
   isLoading: boolean;
   demoMode?: boolean;
+  liveModeAvailable?: boolean;
   onRunDemo?: (fixtureId: DemoFixtureId) => void;
   prefillText?: string | null;
   onConsumePrefill?: () => void;
@@ -29,6 +30,7 @@ export default function ProofInput({
   onSubmit,
   isLoading,
   demoMode = false,
+  liveModeAvailable = false,
   onRunDemo,
   prefillText,
   onConsumePrefill,
@@ -131,7 +133,9 @@ export default function ProofInput({
                 Demo Mode
               </p>
               <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                Run canned proofs for screenshots, testing, and portfolio demos without using API credits.
+                {liveModeAvailable
+                  ? "Run canned fixtures instantly, or submit your own proof to use the live forge flow when a key is available."
+                  : "Run canned fixtures instantly, or submit your own proof to use the local mock demo pipeline without an API key."}
               </p>
             </div>
           </div>

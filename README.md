@@ -44,7 +44,7 @@ It also tags broad mathematical domains such as:
 - Produces a heuristic verification score and vulnerability list
 - Suggests alternative approaches when a proof draft looks weak
 - Includes labeled example proofs across multiple branches of mathematics
-- Includes a real demo mode with canned outputs for screenshots, testing, and portfolio demos
+- Includes a real demo mode with canned fixtures plus an offline mock pipeline for custom proof input
 - Stores proof history in SQLite so you can revisit, filter, and re-forge old drafts
 - Renders math with KaTeX and supports symbol helpers plus LaTeX preview
 
@@ -86,7 +86,7 @@ OPENAI_API_KEY=sk-your-real-key-here
 DEMO_MODE=true
 ```
 
-`OPENAI_API_KEY` is optional if you only want to use demo mode.
+`OPENAI_API_KEY` is optional. With `DEMO_MODE=true`, the app can run fully offline in demo/mock mode without a key.
 
 ### 4. Start the app
 
@@ -107,7 +107,12 @@ npm run start
 
 Demo mode is the easiest way to run Proof Forge without relying on OpenAI credits.
 
-When demo mode is enabled, the Forge page shows `Run Demo` buttons. Those buttons return canned proof results from local fixtures instead of making a live API call. This is useful for testing the UI, recording a walkthrough, taking screenshots, or letting someone explore the project without first setting up an API key.
+When demo mode is enabled, Proof Forge supports two local no-credit paths:
+
+- canned fixture demos from the `Run Demo` buttons
+- custom proof input through a local mock pipeline when no API key is available
+
+Both are clearly demo behaviors. They are useful for testing the UI, recording walkthroughs, taking screenshots, and sharing the app without requiring OpenAI credits.
 
 ### Demo setup
 
@@ -137,7 +142,7 @@ DEMO_MODE=true
 OPENAI_API_KEY=sk-your-real-key-here
 ```
 
-`OPENAI_API_KEY` is optional for demo mode. `DEMO_MODE=true` by itself is enough to enable the canned fixtures.
+`OPENAI_API_KEY` is optional for demo mode. `DEMO_MODE=true` by itself is enough to enable both canned fixtures and offline mock custom forging.
 
 4. Restart the dev server after editing `.env.local`:
 
@@ -151,12 +156,15 @@ If it was already running, stop it with `Ctrl+C` first, then run `npm run dev` a
 
 1. Open [http://localhost:3000](http://localhost:3000)
 2. Go to `/forge` if you are not already there
-3. Confirm both of these appear:
+3. Confirm the demo indicators appear:
 
 - a small message near the top saying demo mode is on
 - a `Demo Mode` panel with several `Run Demo` buttons
+- if no API key is set, custom proof submission still succeeds and the result is labeled as an offline mock result
 
-### What the demo buttons do
+### Demo behavior
+
+#### Fixture demos
 
 The demo buttons load canned proof outputs instantly. They are meant to simulate the full Forge experience without depending on live model calls.
 
@@ -169,6 +177,23 @@ Current demo fixtures include:
 - algebraic proof
 - combinatorial proof
 - set-theoretic proof
+
+#### Offline mock custom forging
+
+When `DEMO_MODE=true` and no client-side or server-side OpenAI key is available, submitting your own proof text uses a local mock pipeline instead of the OpenAI API.
+
+That mock pipeline:
+
+- inspects the proof text with simple heuristics
+- infers a rough proof style such as direct, contradiction, induction, or epsilon-delta
+- returns a polished proof, steps, a score, vulnerabilities, and possible suggestions in the same UI shape as the live flow
+- labels the result as a mock/offline demo result
+
+This path is intended for screenshots, UX demos, testing, and portfolio use. It is not actual proof validation.
+
+#### Live mode inside demo mode
+
+If you set `OPENAI_API_KEY`, Proof Forge keeps the same canned `Run Demo` fixtures, but custom proof submissions use the live OpenAI-powered forge flow instead of the offline mock fallback.
 
 ### Common setup mistakes
 
@@ -187,11 +212,13 @@ Demo mode does:
 - let you test the main product flow without API credits
 - let you inspect proof tabs, verification output, and suggestions
 - make screenshots and videos easier because outputs are predictable
+- let you submit arbitrary proof text offline when no API key is present
 
 Demo mode does not:
 
 - replace the live model entirely
-- test actual OpenAI responses
+- turn heuristic mock outputs into real proof validation
+- test actual OpenAI responses when no key is present
 - measure model quality
 
 It is a parallel no-credit path for testing. If you also set `OPENAI_API_KEY`, you can use both demo fixtures and normal live forging in the same local app.

@@ -25,6 +25,7 @@ interface ProofOutputProps {
   onRetryWithSuggestion: (suggestion: ProofSuggestion) => void;
   isLoading: boolean;
   isDemo?: boolean;
+  demoKind?: "fixture" | "mock" | null;
   onNotify?: (message: string) => void;
 }
 
@@ -55,6 +56,7 @@ export default function ProofOutput({
   onRetryWithSuggestion,
   isLoading,
   isDemo = false,
+  demoKind = null,
   onNotify,
 }: ProofOutputProps) {
   const [activeTab, setActiveTab] = useState<Tab>("proof");
@@ -148,7 +150,7 @@ export default function ProofOutput({
       <div className="mb-3 flex flex-wrap items-center gap-2">
         {isDemo && (
           <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
-            Demo Result
+            {demoKind === "mock" ? "Offline Mock Result" : "Fixture Demo Result"}
           </span>
         )}
         <span className="rounded-full border border-violet-500/25 bg-violet-500/15 px-2.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-300">
@@ -162,6 +164,11 @@ export default function ProofOutput({
       </div>
 
       <div className="mb-4">
+        {isDemo && demoKind === "mock" && (
+          <p className="mb-3 text-xs leading-5 text-emerald-700 dark:text-emerald-300">
+            This result came from the local demo pipeline. It is illustrative, heuristic, and does not use the OpenAI API.
+          </p>
+        )}
         <VerificationBadge
           verification={verification}
           proofTypeLabel={PROOF_TYPE_LABELS[result.proofType]}

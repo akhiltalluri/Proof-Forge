@@ -130,6 +130,7 @@ export interface ApiResponse {
   data?: ProofResult;
   error?: string;
   demo?: boolean;
+  demoKind?: "fixture" | "mock";
 }
 
 export type DemoFixtureId =

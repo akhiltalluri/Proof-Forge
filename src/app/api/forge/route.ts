@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { forgeProof } from "@/lib/openai";
-import { getDemoResult } from "@/lib/demo-fixtures";
+import { getDemoResult, getMockDemoResult } from "@/lib/demo-fixtures";
 import { DemoFixtureId } from "@/types/proof";
 import { normalizeProofType } from "@/lib/proof-taxonomy";
 
 export async function POST(req: NextRequest) {
   try {
     const { proof, apiKey, proofType, demo, demoFixture } = await req.json();
+    const demoModeEnabled = process.env.DEMO_MODE === "true";
 
-    if (process.env.DEMO_MODE === "true" && demo === true) {
+    if (demoModeEnabled && demo === true) {
       const fixtureId = (demoFixture || "direct") as DemoFixtureId;
       return NextResponse.json({
         success: true,
         data: getDemoResult(fixtureId),
         demo: true,
+        demoKind: "fixture",
       });
     }
 
@@ -25,6 +27,18 @@ export async function POST(req: NextRequest) {
     }
 
     const key = apiKey || process.env.OPENAI_API_KEY;
+    if (demoModeEnabled && !key) {
+      return NextResponse.json({
+        success: true,
+        data: getMockDemoResult(
+          proof.trim(),
+          proofType ? normalizeProofType(proofType) : undefined
+        ),
+        demo: true,
+        demoKind: "mock",
+      });
+    }
+
     if (!key) {
       return NextResponse.json(
         {
