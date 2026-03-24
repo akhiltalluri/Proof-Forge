@@ -65,27 +65,6 @@ Important: demo mode is illustrative, not authoritative. Mock outputs are heuris
 - remark-math
 - rehype-katex
 
-## Project structure
-
-```text
-Proof-Forge/
-├── prisma/
-│   ├── migrations/
-│   └── schema.prisma
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   ├── archive/
-│   │   ├── forge/
-│   │   ├── library/
-│   │   └── settings/
-│   ├── components/
-│   ├── lib/
-│   └── types/
-├── README.md
-└── package.json
-```
-
 ## Getting started
 
 1. Clone the repository:
