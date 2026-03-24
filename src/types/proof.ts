@@ -103,6 +103,7 @@ export interface ProofSuggestion {
   label: string;
   description: string;
   sketch: string;
+  projectedScore?: number;
 }
 
 export interface ProofResult {

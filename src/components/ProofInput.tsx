@@ -4,7 +4,6 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import { DEMO_FIXTURES } from "@/lib/demo-fixtures";
 import {
   EXAMPLE_COUNT,
-  EXAMPLE_VERIFICATION_LABELS,
   getRandomExample,
   ProofExample,
 } from "@/lib/examples";
@@ -159,7 +158,7 @@ export default function ProofInput({
               Example Bank
             </p>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
-              {EXAMPLE_COUNT} labeled examples span major proof styles, multiple branches of math, and a range of verification quality from polished sketches to shaky drafts.
+              {EXAMPLE_COUNT} labeled examples span major proof styles, multiple branches of mathematics, and a range of topics and difficulty levels.
             </p>
           </div>
           <button
@@ -184,17 +183,6 @@ export default function ProofInput({
               </span>
               <span className="rounded-full border border-zinc-300 px-2 py-0.5 text-[10px] font-semibold text-zinc-600 dark:border-zinc-600 dark:text-zinc-300">
                 {activeExample.difficulty}
-              </span>
-              <span
-                className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                  activeExample.verification === "sound"
-                    ? "border-emerald-500/25 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                    : activeExample.verification === "mixed"
-                      ? "border-amber-500/25 bg-amber-500/15 text-amber-700 dark:text-amber-300"
-                      : "border-rose-500/25 bg-rose-500/15 text-rose-700 dark:text-rose-300"
-                }`}
-              >
-                {EXAMPLE_VERIFICATION_LABELS[activeExample.verification]}
               </span>
             </div>
             <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">

@@ -114,6 +114,11 @@ Severity levels:
 - "major": A significant gap that undermines confidence (e.g., missing case, unjustified bound).
 - "minor": A small imprecision that doesn't break the proof but should be fixed (e.g., missing quantifier, imprecise wording).
 
+Important calibration rule:
+- Do NOT mark a step as "critical" merely because it is concise or omits routine exposition.
+- If a cited theorem genuinely implies the claim but the proof could explain that implication more clearly, that should usually be "minor" or "major", not "critical".
+- Reserve "critical" for a real logical break: a false claim, a theorem used outside its hypotheses, a missing argument that the cited result does not actually supply, or a genuine counterexample.
+
 Use this fixed weighted rubric. The application will compute the final score from these category scores, so your category judgments must be honest and specific:
 ${VERIFICATION_DIMENSION_GUIDE}
 
@@ -180,6 +185,8 @@ For each suggestion:
 - Pick a different proof technique (or the same technique done correctly).
 - Give a brief, clear description of the approach.
 - Provide a short sketch (2-4 sentences) of how the proof would go.
+- Estimate a projected verification score for the alternative if the user retries with that approach and the proof is written competently.
+- Only return alternatives whose projected score is STRICTLY better than the current proof score.
 - Make the suggestions genuinely different from each other.
 
 Valid proof types: ${PROOF_TYPE_LIST}.
@@ -195,16 +202,19 @@ You MUST respond with valid JSON:
       "id": "s1",
       "proofType": "one of the valid types",
       "label": "Short name, e.g. 'Direct proof via triangle inequality'",
+      "projectedScore": 0-100,
       "description": "1-2 sentences explaining the approach and why it might work better.",
       "sketch": "2-4 sentence outline of the key steps, using $...$ for math only."
     }
   ]
 }
 
+If no alternative is clearly better than the current proof, return {"suggestions": []}.
 Return ONLY the JSON object. No markdown fences.`;
 
 export function buildSuggestPrompt(
   originalProof: string,
+  currentScore: number,
   verificationSummary: string,
   vulnerabilities: string
 ): string {
@@ -214,6 +224,8 @@ Original proof sketch:
 """
 ${originalProof}
 """
+
+Current proof score: ${currentScore}
 
 Verification summary: ${verificationSummary}
 

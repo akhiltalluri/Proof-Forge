@@ -144,7 +144,12 @@ export async function suggestAlternatives(
   const raw = await llm(
     client,
     SUGGEST_PROMPT,
-    buildSuggestPrompt(originalProof, verification.summary, vulnText),
+    buildSuggestPrompt(
+      originalProof,
+      verification.score,
+      verification.summary,
+      vulnText
+    ),
     0.6
   );
   const parsed = JSON.parse(raw) as { suggestions: ProofSuggestion[] };
@@ -155,8 +160,16 @@ export async function suggestAlternatives(
     ...suggestion,
     id: suggestion.id || `s${index + 1}`,
     proofType: normalizeProofType(suggestion.proofType),
+    projectedScore:
+      typeof suggestion.projectedScore === "number"
+        ? Math.max(0, Math.min(100, Math.round(suggestion.projectedScore)))
+        : undefined,
   }));
-  return parsed.suggestions;
+  return parsed.suggestions.filter(
+    (suggestion) =>
+      typeof suggestion.projectedScore === "number" &&
+      suggestion.projectedScore > verification.score
+  );
 }
 
 export async function forgeProof(
@@ -177,11 +190,14 @@ export async function forgeProof(
   };
 
   if (!verification.passed) {
-    result.suggestions = await suggestAlternatives(
+    const suggestions = await suggestAlternatives(
       informalProof,
       verification,
       apiKey
     );
+    if (suggestions.length > 0) {
+      result.suggestions = suggestions;
+    }
   }
 
   return result;

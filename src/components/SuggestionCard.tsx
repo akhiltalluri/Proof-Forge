@@ -18,17 +18,19 @@ export default function SuggestionCard({
     <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 transition-all hover:border-indigo-500/40 hover:bg-zinc-100 dark:border-zinc-700/50 dark:bg-zinc-800/30 dark:hover:bg-zinc-800/50">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1.5">
+          <div className="mb-1.5 flex items-center gap-2">
             <span className="rounded-full border border-indigo-500/20 bg-indigo-500/15 px-2.5 py-0.5 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300">
               {PROOF_TYPE_LABELS[suggestion.proofType]}
             </span>
+            {typeof suggestion.projectedScore === "number" && (
+              <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
+                Score {suggestion.projectedScore}
+              </span>
+            )}
           </div>
           <h4 className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
             {suggestion.label}
           </h4>
-          <p className="mt-1 text-xs text-zinc-500 leading-relaxed dark:text-zinc-500">
-            {suggestion.description}
-          </p>
           <div className="mt-2 rounded-lg bg-zinc-100 px-3 py-2 dark:bg-zinc-900/40">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
               Sketch
