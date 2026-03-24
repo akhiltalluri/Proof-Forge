@@ -5,7 +5,7 @@ export const revalidate = 0;
 
 export async function GET() {
   return NextResponse.json({
-    demoMode: process.env.DEMO_MODE === "true",
+    demoModeAvailable: true,
     liveModeAvailable: !!process.env.OPENAI_API_KEY,
   });
 }

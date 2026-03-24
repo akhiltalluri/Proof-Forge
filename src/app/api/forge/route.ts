@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { forgeProof } from "@/lib/openai";
 import { getDemoResult, getMockDemoResult } from "@/lib/demo-fixtures";
-import { DemoFixtureId } from "@/types/proof";
+import { DemoFixtureId, ForgeMode } from "@/types/proof";
 import { normalizeProofType } from "@/lib/proof-taxonomy";
 
 export async function POST(req: NextRequest) {
   try {
-    const { proof, apiKey, proofType, demo, demoFixture } = await req.json();
-    const demoModeEnabled = process.env.DEMO_MODE === "true";
+    const { proof, apiKey, proofType, demo, demoFixture, mode } =
+      await req.json();
+    const requestedMode: ForgeMode | undefined =
+      mode === "demo" || mode === "live" ? mode : undefined;
 
-    if (demoModeEnabled && demo === true) {
+    if (demo === true) {
       const fixtureId = (demoFixture || "direct") as DemoFixtureId;
       return NextResponse.json({
         success: true,
@@ -27,7 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     const key = apiKey || process.env.OPENAI_API_KEY;
-    if (demoModeEnabled && !key) {
+    if (requestedMode === "demo") {
       return NextResponse.json({
         success: true,
         data: getMockDemoResult(
@@ -39,15 +41,27 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (!key) {
+    if (requestedMode === "live" && !key) {
       return NextResponse.json(
         {
           success: false,
           error:
-            "No API key found. Set OPENAI_API_KEY in .env.local or provide one in the settings panel.",
+            "Live mode needs an OpenAI API key. Add one in the settings panel or configure OPENAI_API_KEY on the server.",
         },
         { status: 401 }
       );
+    }
+
+    if (!key) {
+      return NextResponse.json({
+        success: true,
+        data: getMockDemoResult(
+          proof.trim(),
+          proofType ? normalizeProofType(proofType) : undefined
+        ),
+        demo: true,
+        demoKind: "mock",
+      });
     }
 
     const result = await forgeProof(

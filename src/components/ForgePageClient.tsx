@@ -11,16 +11,30 @@ import {
   ProofType,
   ApiResponse,
   DemoFixtureId,
+  ForgeMode,
 } from "@/types/proof";
 import { titleFromProof } from "@/lib/archive-helpers";
 
 interface ForgePageClientProps {
-  initialDemoMode: boolean;
+  initialDemoModeAvailable: boolean;
   initialLiveModeAvailable: boolean;
 }
 
+const MODE_STORAGE_KEY = "proof-forge-mode";
+
+function resolveInitialMode(
+  savedMode: string | null,
+  demoModeAvailable: boolean,
+  liveModeAvailable: boolean
+): ForgeMode {
+  if (savedMode === "demo" && demoModeAvailable) return "demo";
+  if (savedMode === "live" && liveModeAvailable) return "live";
+  if (demoModeAvailable) return "demo";
+  return "live";
+}
+
 export default function ForgePageClient({
-  initialDemoMode,
+  initialDemoModeAvailable,
   initialLiveModeAvailable,
 }: ForgePageClientProps) {
   const [result, setResult] = useState<ProofResult | null>(null);
@@ -30,19 +44,36 @@ export default function ForgePageClient({
   const [apiKey, setApiKey] = useState<string>("");
   const [lastProof, setLastProof] = useState<string>("");
   const [hasKey, setHasKey] = useState(false);
-  const [demoMode] = useState(initialDemoMode);
-  const [liveModeAvailable] = useState(initialLiveModeAvailable);
+  const [demoModeAvailable, setDemoModeAvailable] = useState(
+    initialDemoModeAvailable
+  );
+  const [serverLiveModeAvailable, setServerLiveModeAvailable] = useState(
+    initialLiveModeAvailable
+  );
+  const [currentMode, setCurrentMode] = useState<ForgeMode>(() =>
+    initialDemoModeAvailable ? "demo" : "live"
+  );
+  const [modeReady, setModeReady] = useState(false);
   const [lastIsDemo, setLastIsDemo] = useState(false);
-  const [lastDemoKind, setLastDemoKind] = useState<"fixture" | "mock" | null>(null);
+  const [lastDemoKind, setLastDemoKind] = useState<"fixture" | "mock" | null>(
+    null
+  );
   const [toast, setToast] = useState<string | null>(null);
   const [prefillText, setPrefillText] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isLoading = stage !== "idle" && stage !== "done";
+  const liveModeAvailable = serverLiveModeAvailable || hasKey;
+  const modeDescription =
+    currentMode === "demo"
+      ? "Demo mode uses the local mock/demo pipeline. No OpenAI API key is required."
+      : liveModeAvailable
+        ? "Live mode uses the OpenAI API for model-backed rewriting and feedback."
+        : "Live mode uses the OpenAI API. Add a server-side or browser-stored API key to use it.";
 
   useEffect(() => {
-    const stored = localStorage.getItem("proof-forge-api-key");
-    setHasKey(!!(stored || apiKey));
+    const storedKey = localStorage.getItem("proof-forge-api-key") ?? "";
+    setHasKey(!!(storedKey || apiKey));
   }, [apiKey]);
 
   useEffect(() => {
@@ -60,11 +91,69 @@ export default function ForgePageClient({
     }
   }, []);
 
+  useEffect(() => {
+    const storedKey = localStorage.getItem("proof-forge-api-key") ?? "";
+    const localLiveAvailable = !!storedKey;
+    const savedMode = localStorage.getItem(MODE_STORAGE_KEY);
+
+    fetch("/api/config", { cache: "no-store" })
+      .then((response) => response.json())
+      .then(
+        (data: { demoModeAvailable?: boolean; liveModeAvailable?: boolean }) => {
+          const nextDemoAvailable = data.demoModeAvailable !== false;
+          const nextServerLiveAvailable = !!data.liveModeAvailable;
+          const nextMode = resolveInitialMode(
+            savedMode,
+            nextDemoAvailable,
+            nextServerLiveAvailable || localLiveAvailable
+          );
+
+          setDemoModeAvailable(nextDemoAvailable);
+          setServerLiveModeAvailable(nextServerLiveAvailable);
+          setCurrentMode(nextMode);
+          setModeReady(true);
+        }
+      )
+      .catch(() => {
+        const nextMode = resolveInitialMode(
+          savedMode,
+          initialDemoModeAvailable,
+          initialLiveModeAvailable || localLiveAvailable
+        );
+        setCurrentMode(nextMode);
+        setModeReady(true);
+      });
+  }, [initialDemoModeAvailable, initialLiveModeAvailable]);
+
+  useEffect(() => {
+    if (!modeReady) return;
+    localStorage.setItem(MODE_STORAGE_KEY, currentMode);
+  }, [currentMode, modeReady]);
+
   const showToast = useCallback((message: string) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast(message);
     toastTimer.current = setTimeout(() => setToast(null), 2800);
   }, []);
+
+  const handleModeChange = useCallback(
+    (mode: ForgeMode) => {
+      setCurrentMode(mode);
+      setError(null);
+
+      if (mode === "demo") {
+        showToast("Demo mode selected");
+        return;
+      }
+
+      if (liveModeAvailable) {
+        showToast("Live mode selected");
+      } else {
+        showToast("Live mode needs an API key");
+      }
+    },
+    [liveModeAvailable, showToast]
+  );
 
   const runDemo = useCallback(
     async (fixtureId: DemoFixtureId) => {
@@ -84,7 +173,11 @@ export default function ForgePageClient({
           method: "POST",
           cache: "no-store",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ demo: true, demoFixture: fixtureId }),
+          body: JSON.stringify({
+            mode: "demo",
+            demo: true,
+            demoFixture: fixtureId,
+          }),
         });
 
         clearTimeout(t1);
@@ -119,6 +212,14 @@ export default function ForgePageClient({
 
   const runPipeline = useCallback(
     async (proof: string, forceType?: ProofType) => {
+      if (currentMode === "live" && !liveModeAvailable) {
+        setError(
+          "Live mode is selected, but no OpenAI API key is available. Add one in the settings modal or switch to Demo mode."
+        );
+        setShowKeyModal(true);
+        return;
+      }
+
       setStage("classifying");
       setError(null);
       setResult(null);
@@ -141,6 +242,7 @@ export default function ForgePageClient({
           cache: "no-store",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            mode: currentMode,
             proof,
             apiKey: key || undefined,
             proofType: forceType || undefined,
@@ -187,7 +289,7 @@ export default function ForgePageClient({
         setStage("idle");
       }
     },
-    [apiKey, showToast]
+    [apiKey, currentMode, liveModeAvailable, showToast]
   );
 
   const handleSubmit = useCallback(
@@ -243,45 +345,66 @@ export default function ForgePageClient({
 
         <div className="soft-rule mt-5" />
 
-        <div className="pt-4 text-center">
-          {!hasKey && !liveModeAvailable && !demoMode && (
-            <button
-              onClick={() => setShowKeyModal(true)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-zinc-300 bg-white/80 px-4 py-2 text-xs font-medium text-zinc-600 transition-all hover:border-zinc-400 hover:text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:text-zinc-100"
-            >
-              <svg
-                className="h-3.5 w-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"
-                />
-              </svg>
-              Set API Key to forge with the live model
-            </button>
-          )}
-          {demoMode && (
-            <div className="mt-2 space-y-1 text-[11px] text-emerald-600 dark:text-emerald-400">
-              <p>
-                Demo mode is on. The canned `Run Demo` buttons still use local fixture outputs.
+        <div className="pt-4">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-400">
+                Mode
               </p>
-              {!hasKey && !liveModeAvailable && (
-                <p>
-                  Custom proof input now uses a local mock proof pipeline, so results are illustrative and do not call the OpenAI API.
-                </p>
+              <div className="mt-2 inline-flex rounded-full border border-zinc-200 bg-white/80 p-1 dark:border-zinc-700 dark:bg-zinc-900/70">
+                {(["demo", "live"] as const).map((mode) => {
+                  const active = currentMode === mode;
+                  const unavailable = mode === "live" && !liveModeAvailable;
+                  return (
+                    <button
+                      key={mode}
+                      onClick={() => handleModeChange(mode)}
+                      className={`rounded-full px-4 py-2 text-xs font-semibold transition-all ${
+                        active
+                          ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-950"
+                          : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
+                      }`}
+                    >
+                      {mode === "demo" ? "Demo" : "Live"}
+                      {unavailable ? " (Needs Key)" : ""}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="max-w-2xl space-y-1">
+              <p
+                className={`text-[11px] ${
+                  currentMode === "demo"
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : liveModeAvailable
+                      ? "text-sky-600 dark:text-sky-400"
+                      : "text-amber-600 dark:text-amber-400"
+                }`}
+              >
+                {modeDescription}
+              </p>
+              {currentMode === "live" && !liveModeAvailable && (
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                    No server-side key is configured, and no browser-stored API key is available yet.
+                  </p>
+                  <button
+                    onClick={() => setShowKeyModal(true)}
+                    className="rounded-full border border-amber-400/40 bg-amber-500/10 px-3 py-1 text-[11px] font-medium text-amber-700 transition-all hover:bg-amber-500/20 dark:text-amber-300"
+                  >
+                    Add API Key
+                  </button>
+                </div>
               )}
-              {(hasKey || liveModeAvailable) && (
-                <p>
-                  Live forging is also available because an API key is present, so custom submissions can still use the real model.
+              {demoModeAvailable && currentMode === "demo" && (
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
+                  Demo mode includes canned fixtures plus offline mock results for custom proof input.
                 </p>
               )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -328,8 +451,8 @@ export default function ForgePageClient({
             <ProofInput
               onSubmit={handleSubmit}
               isLoading={isLoading}
-              demoMode={demoMode}
-              liveModeAvailable={liveModeAvailable || hasKey}
+              demoMode={currentMode === "demo" && demoModeAvailable}
+              liveModeAvailable={liveModeAvailable}
               onRunDemo={runDemo}
               prefillText={prefillText}
               onConsumePrefill={() => setPrefillText(null)}

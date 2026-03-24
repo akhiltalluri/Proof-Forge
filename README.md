@@ -38,7 +38,7 @@ Live mode uses the OpenAI API for model-backed proof rewriting, structure extrac
 
 ### Demo mode
 
-Demo mode supports both canned demo fixtures and offline mock results for custom proof input. The canned fixtures are useful for predictable walkthroughs, and the offline mock pipeline lets the app run locally without API credits by generating heuristic placeholder results for arbitrary drafts. This mode is intended for screenshots, portfolio demos, and local testing.
+Demo mode supports both canned demo fixtures and offline mock results for custom proof input. The canned fixtures are useful for predictable walkthroughs, and the offline mock pipeline lets the app run locally without API credits by generating heuristic placeholder results for arbitrary drafts. This mode is intended for screenshots, portfolio demos, and local testing. When demo mode is available, the forge page now defaults to it and exposes a visible `Demo | Live` selector in the UI.
 
 Important: demo mode is illustrative, not authoritative. Mock outputs are heuristic approximations of the product flow and are not equivalent to live model-backed feedback.
 
@@ -80,7 +80,7 @@ cd Proof-Forge
 npm install
 ```
 
-3. Copy the environment file:
+3. Optional: copy the environment file if you want to provide a server-side API key:
 
 ```bash
 cp .env.example .env.local
@@ -88,20 +88,17 @@ cp .env.example .env.local
 
 4. Choose how you want to run the app:
 
-Demo-only setup:
+Demo setup:
 
-```env
-DEMO_MODE=true
-```
+No environment changes are required. Demo mode is available directly from the forge page UI, is selected by default when available, and does not need an API key.
 
 Live setup:
 
 ```env
-DEMO_MODE=true
 OPENAI_API_KEY=your_key_here
 ```
 
-`DEMO_MODE=true` lets the app run in demo mode without an API key. Adding `OPENAI_API_KEY` enables live forging through the OpenAI-backed pipeline.
+You can also supply an API key from the UI and switch to Live mode from the forge page selector. Adding `OPENAI_API_KEY` in `.env.local` enables live forging server-side by default.
 
 5. Start the development server:
 

@@ -125,6 +125,8 @@ export type PipelineStage =
   | "suggesting"
   | "done";
 
+export type ForgeMode = "demo" | "live";
+
 export interface ApiResponse {
   success: boolean;
   data?: ProofResult;
