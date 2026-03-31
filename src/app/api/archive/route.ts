@@ -19,9 +19,9 @@ export async function GET(req: NextRequest) {
   if (qRaw) {
     andClause.push({
       OR: [
-        { informalProof: { contains: qRaw } },
-        { polishedProof: { contains: qRaw } },
-        { title: { contains: qRaw } },
+        { informalProof: { contains: qRaw, mode: "insensitive" } },
+        { polishedProof: { contains: qRaw, mode: "insensitive" } },
+        { title: { contains: qRaw, mode: "insensitive" } },
       ],
     });
   }

@@ -56,7 +56,7 @@ Important: demo mode is illustrative, not authoritative. Mock outputs are heuris
 - Next.js API routes
 - OpenAI API integration
 - Prisma ORM
-- SQLite
+- PostgreSQL
 
 ### Rendering and text handling
 
@@ -80,17 +80,26 @@ cd Proof-Forge
 npm install
 ```
 
-3. Optional: copy the environment file if you want to provide a server-side API key:
+3. Copy the environment file for local development:
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-4. Choose how you want to run the app:
+4. Create a local PostgreSQL database and apply the Prisma migration:
+
+```bash
+createdb proof_forge
+npx prisma migrate dev --name init_postgres
+```
+
+If your local Postgres username, password, host, or port differ from the example, update `DATABASE_URL` in `.env` before running the migration.
+
+5. Choose how you want to run the app:
 
 Demo setup:
 
-No environment changes are required. Demo mode is available directly from the forge page UI, is selected by default when available, and does not need an API key.
+Demo mode does not require an OpenAI API key, but the app still requires a PostgreSQL database via `DATABASE_URL`.
 
 Live setup:
 
@@ -98,15 +107,21 @@ Live setup:
 OPENAI_API_KEY=your_key_here
 ```
 
-You can also supply an API key from the UI and switch to Live mode from the forge page selector. Adding `OPENAI_API_KEY` in `.env.local` enables live forging server-side by default.
+You can also supply an API key from the UI and switch to Live mode from the forge page selector. Adding `OPENAI_API_KEY` in `.env` enables live forging server-side by default. If you prefer, you can keep database settings in `.env` and place only UI/runtime-specific overrides in `.env.local`.
 
-5. Start the development server:
+6. Start the development server:
 
 ```bash
 npm run dev
 ```
 
-6. Open the app at [http://localhost:3000](http://localhost:3000).
+7. Open the app at [http://localhost:3000](http://localhost:3000).
+
+## Deployment notes
+
+- Set `DATABASE_URL` in your hosting provider for both build and runtime.
+- Run `npx prisma migrate deploy` against the hosted PostgreSQL database before serving traffic.
+- The checked-in Prisma migration is intended for fresh PostgreSQL databases. This repository no longer supports the old local SQLite file as an active datasource.
 
 ## Limitations
 
